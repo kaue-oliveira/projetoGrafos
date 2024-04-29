@@ -6,9 +6,8 @@ using namespace std;
 
 int main() {
     // Criando um objeto da classe Grafo
-    int numVertices = 10; // Supondo um número máximo de vértices
-    int valorarestanula = 0; // Valor para representar aresta inexistente
-    Grafo grafo(numVertices, valorarestanula);
+    int numVertices = 100; // Supondo um número máximo de vértices
+    Grafo grafo(numVertices);
 
     // Pergunta se o grafo é direcionado
     char resposta;
@@ -28,5 +27,7 @@ int main() {
     // Imprimindo a lista de vértices
     grafo.imprimirvertices();
 
+    int grau =grafo.obtergrau("1");
+    cout << grau << endl;
     return 0;
 }

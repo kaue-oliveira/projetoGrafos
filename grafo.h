@@ -17,11 +17,11 @@ public:
     bool direcionado; // Indica se o grafo é direcionado ou não
 
 
-    Grafo(int max, int valorarestanula);
+    Grafo(int max);
     ~Grafo();
     int obterindice(string item);
     void inserevertice(string item);
-    void inserearesta(string Nosaida, string Noentrada, int peso);
+    void inserearesta(string Nosaida, string Noentrada);
     int obtergrau(string item);
     void imprimirmatriz();
     void imprimirvertices();

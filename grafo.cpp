@@ -1,10 +1,10 @@
 // Arquivo grafo.cpp
 #include "grafo.h"
 
-Grafo::Grafo(int max, int valorarestanula) {
+Grafo::Grafo(int max) {
     numvertices = 0;
     maxvertices = max;
-    arestanula = valorarestanula;
+    arestanula = 0;
     direcionado = false; // Por padrão, o grafo não é direcionado
 
     vertices = new string[maxvertices];
@@ -43,11 +43,11 @@ void Grafo::inserevertice(string item) {
     numvertices++;
 }
 
-void Grafo::inserearesta(string Nosaida, string Noentrada, int peso) {
+void Grafo::inserearesta(string Nosaida, string Noentrada) {
     int linha = obterindice(Nosaida);
     int coluna = obterindice(Noentrada);
 
-    if (linha != -1 && coluna != -1) {
+    if (linha != -1 and coluna != -1) {
         if (direcionado) {
             matrizadjacencias[linha][coluna] = 1; // Se há aresta, define como 1
         } else {
@@ -83,7 +83,13 @@ void Grafo::imprimirmatriz() {
 void Grafo::imprimirvertices() {
     cout << "Lista de Vértices:\n";
     for (int i = 0; i < numvertices; i++) {
-        cout << i << ": " << vertices[i] << endl;
+        cout << vertices[i];
+        for (int j = 0; j < numvertices; j++){
+            if (matrizadjacencias[i][j] != 0){
+                cout << "->" << vertices[j];
+            }
+        }
+        cout << endl;
     }
 }
 
@@ -143,7 +149,7 @@ void Grafo::lergrafo() {
                     i++;
                 }
                 nos[1] = aresta;
-                inserearesta(nos[0], nos[1], peso);
+                inserearesta(nos[0], nos[1]);
                 aresta.clear();
                 nos[0].clear();
                 nos[1].clear();
