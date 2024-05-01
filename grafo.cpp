@@ -1,11 +1,12 @@
 // Arquivo grafo.cpp
 #include "grafo.h"
-
-Grafo::Grafo(int max) {
+/*Construtor para o grafo, ele inicia a matriz e tambem ajusta as arestas que existem, ou coisas do tipo*/
+Grafo::Grafo(int max) 
+{
     numvertices = 0;
     maxvertices = max;
     arestanula = 0;
-    direcionado = false; // Por padrão, o grafo não é direcionado
+    direcionado = false; 
 
     vertices = new string[maxvertices];
 
@@ -20,16 +21,19 @@ Grafo::Grafo(int max) {
         }
     }
 }
-
-Grafo::~Grafo() {
+/*Destrutor para o grafo, ele vai desalocando linhas e colunas do grafo*/
+Grafo::~Grafo() 
+{
     delete[] vertices;
     for (int i = 0; i < maxvertices; i++) {
         delete[] matrizadjacencias[i];
     }
     delete[] matrizadjacencias;
 }
-
-int Grafo::obterindice(string item) {
+/*Essa função é bem util pra verificar se um vertice existe ou não, caso não exista é retornado -1
+é importante mudar caso queira adicionar pesos nas arestas*/
+int Grafo::obterindice(string item) 
+{
     for (int i = 0; i < numvertices; i++) {
         if (vertices[i] == item) {
             return i;
@@ -37,13 +41,16 @@ int Grafo::obterindice(string item) {
     }
     return -1; // Retorna -1 se o vértice não for encontrado
 }
-
-void Grafo::inserevertice(string item) {
+/*Insere um vertice no grafo(util pra construir ou editar)*/
+void Grafo::inserevertice(string item) 
+{
     vertices[numvertices] = item;
     numvertices++;
 }
 
-void Grafo::inserearesta(string Nosaida, string Noentrada) {
+/*Insere um grafo no vertice(util pra construir ou editar)*/
+void Grafo::inserearesta(string Nosaida, string Noentrada) 
+{
     int linha = obterindice(Nosaida);
     int coluna = obterindice(Noentrada);
 
@@ -57,7 +64,9 @@ void Grafo::inserearesta(string Nosaida, string Noentrada) {
     }
 }
 
-int Grafo::obtergrau(string item) {
+/*Essa função pode ser bem util futuramente*/
+int Grafo::obtergrau(string item) 
+{
     int linha = obterindice(item);
     int grau = 0;
     if (linha != -1) {
@@ -67,10 +76,19 @@ int Grafo::obtergrau(string item) {
             }
         }
     }
+    for (int i = 0; i < maxvertices; i++){
+      if(matrizadjacencias[i][linha] != arestanula){
+        grau++;
+      }
+    }
     return grau;
+
+    
 }
 
-void Grafo::imprimirmatriz() {
+/*Impressão da matriz de adjacências*/
+void Grafo::imprimirmatriz() 
+{
     cout << "Matriz de adjacências:\n";
     for (int i = 0; i < numvertices; i++) {
         for (int j = 0; j < numvertices; j++) {
@@ -80,7 +98,9 @@ void Grafo::imprimirmatriz() {
     }
 }
 
-void Grafo::imprimirvertices() {
+/*É util pra imprimir o grafo como se estivesse na lista*/
+void Grafo::imprimirvertices() 
+{
     cout << "Lista de Vértices:\n";
     for (int i = 0; i < numvertices; i++) {
         cout << vertices[i];
@@ -93,20 +113,51 @@ void Grafo::imprimirvertices() {
     }
 }
 
-void Grafo::lergrafo() {
+/*Abre um arquivo e le o grafo, ele pega os vertices e
+caso estejam no formato correto ele insere, caso não
+ele apenas sai do programa.
+a leitura de arestas usa um vetor pra salvar a primeira posição do grafo e a segunda
+ele chama obterindice pra ver se os vertices existem*/
+void Grafo::lergrafo() 
+{
+
     string arquivo = "grafo.txt";
     ifstream file(arquivo);
 
+
     if (!file.is_open()) {
-        cerr << "Erro ao abrir o arquivo." << endl;
-        return;
+        cerr << "Não foi possível abrir o arquivo " << arquivo << "." << endl;
+        exit(EXIT_FAILURE);
     }
 
+    
     string line;
-    getline(file, line); // Lê toda a linha de vértices e arestas
+    getline(file, line);
 
-    size_t pos = line.find("V = {") + 5; // Encontra o início dos vértices
-    size_t end_pos = line.find("};");
+    // Verificando se a linha está no formato esperado
+    size_t vertices_pos = line.find("V = {");
+    size_t arestas_pos = line.find("}; A = {");
+    if (vertices_pos == string::npos or arestas_pos == string::npos) {
+        cerr << "Erro de formatação: falta {} encerrando os vértices ou arestas." << endl
+             << "Por favor, garanta que o formato no arquivo está no seguinte padrão: V = {1,2,...}; A = {(1,2),(2,3),...};" << endl;
+        file.close();
+        // Saindo do programa com status de falha
+        exit(EXIT_FAILURE);
+    }
+
+    // Verificando se os parênteses estão presentes nas arestas
+    string arestas_str = line.substr(arestas_pos);
+    if (arestas_str.find("(") == string::npos or arestas_str.find(")") == string::npos) {
+        cerr << "Erro de formatação: falta de parênteses nas arestas." << endl
+             << "Por favor, garanta que o formato no arquivo está no seguinte padrão: V = {1,2,...}; A = {(1,2),(2,3),...};" << endl;
+        file.close();
+        // Saindo do programa com status de falha
+        exit(EXIT_FAILURE);
+    }
+
+    // Extrai a substring que contém os vértices
+    size_t pos = vertices_pos + 5; // Encontra o início dos vértices
+    size_t end_pos = arestas_pos;
     string vertices_str = line.substr(pos, end_pos - pos);
 
     // Processa os vértices
@@ -121,20 +172,20 @@ void Grafo::lergrafo() {
         }
     }
 
-    pos = line.find("A = {") + 5; // Encontra o início das arestas
-    end_pos = line.find("};");
-    string arestas_str = line.substr(pos, end_pos - pos);
-
     // Processa as arestas
+    pos = arestas_pos + 6; // Encontra o início das arestas
+    end_pos = line.find("};");
+    string arestas_content = line.substr(pos, end_pos - pos);
+
     string aresta;
     string nos[2];
     int peso = 1; // Assumindo peso padrão de 1 para todas as arestas
-    for (size_t i = 0; i <= arestas_str.size(); i++) {
-        if (arestas_str[i] == '(') {
+    for (size_t i = 0; i <= arestas_content.size(); i++) {
+        if (arestas_content[i] == '(') {
             i++; // Ignora o '('
-            while (arestas_str[i] != ')') {
-                if (isdigit(arestas_str[i])) {
-                    aresta += arestas_str[i];
+            while (arestas_content[i] != ')') {
+                if (isdigit(arestas_content[i])) {
+                    aresta += arestas_content[i];
                 }
                 else if (!aresta.empty()) {
                     nos[0] = aresta;
@@ -144,12 +195,24 @@ void Grafo::lergrafo() {
             }
             if (!nos[0].empty()) {
                 i++; // Pula o ','
-                while (isdigit(arestas_str[i])) {
-                    aresta += arestas_str[i];
+                while (isdigit(arestas_content[i])) {
+                    aresta += arestas_content[i];
                     i++;
                 }
                 nos[1] = aresta;
-                inserearesta(nos[0], nos[1]);
+
+                // Verifica se os vértices existem antes de adicionar a aresta
+                int indice1 = obterindice(nos[0]);
+                int indice2 = obterindice(nos[1]);
+                if (indice1 != -1 and indice2 != -1) {
+                    inserearesta(nos[0], nos[1]);
+                } else {
+                    cerr << "Erro: Aresta inválida, vértice não encontrado." << endl
+                         << "Por favor, garanta que o formato no arquivo está no seguinte padrão: V = {1,2,...}; A = {(1,2),(2,3),...};" << endl;
+                    file.close();
+                    // Saindo do programa com status de falha
+                    exit(EXIT_FAILURE);
+                }
                 aresta.clear();
                 nos[0].clear();
                 nos[1].clear();
