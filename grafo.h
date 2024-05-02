@@ -7,7 +7,7 @@
 #include <string>
 #include <cstdlib>
 #include <string>
-
+#include <algorithm>
 using namespace std;
 
 class Grafo {
@@ -29,6 +29,8 @@ public:
     void imprimirmatriz();
     void imprimirvertices();
     void lergrafo();
+    void reescreverArquivo();
+    void removervertice(string verticeEditar);
 };
 
 #endif // GRAFO_H

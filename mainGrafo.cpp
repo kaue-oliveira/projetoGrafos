@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include "grafo.h"
 using namespace std;
 
@@ -14,6 +15,7 @@ int main() {
         grafo.direcionado = true;
     }
 
+    grafo.lergrafo();
 
     grafo.imprimirmatriz();
 
@@ -23,8 +25,25 @@ int main() {
 
     int grau =grafo.obtergrau("1");
     cout << "Grau do vertice 1 = " << grau << endl;
+
+
+
+    try {
+      string verticeRemover;
+      cout << "insira um vertice pra remover: " << endl;
+      cin >> verticeRemover;
+      grafo.removervertice(verticeRemover);
+    }
+    catch (const std::exception& e) {
+        cerr << "Erro: " << e.what() << endl;
+    }
+    
+    
+    grafo.imprimirmatriz();
+
+    
+    
+    
+    
     return 0;
-
 }
-
-

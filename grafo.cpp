@@ -1,5 +1,7 @@
 // Arquivo grafo.cpp
 #include "grafo.h"
+const string Nomearquivo = "grafo.txt";
+
 /*Construtor para o grafo, ele inicia a matriz e tambem ajusta as arestas que existem, ou coisas do tipo*/
 Grafo::Grafo(int max) 
 {
@@ -113,6 +115,51 @@ void Grafo::imprimirvertices()
     }
 }
 
+void Grafo::removervertice(string verticeEditar)
+{
+  bool existe = false;
+  for (int i = 0; i < maxvertices; i++){
+    if (vertices[i] == verticeEditar) {
+      existe = true;
+    }
+  }
+
+  if (existe == false) {
+      throw invalid_argument("O vertice não existe =(");
+  }
+  int vertice;
+  vertice = stoi(verticeEditar);
+  vertice--;
+  for (int i = 0; i < numvertices; i++) {
+    for (int j = 0; j < numvertices; j++) {
+        matrizadjacencias[i][vertice] = 0; 
+    }
+  }
+
+  for (int i = 0; i < numvertices; i++) {
+    for (int j = 0; j < numvertices; j++) {
+        matrizadjacencias[vertice][j] = 0; 
+    }
+  }
+  
+  string verticesTemp[numvertices];
+  for (int i = 0; i < numvertices; i++) {
+    if (verticeEditar != vertices[i]) {
+    int j = 0;
+    verticesTemp[i] = vertices[i];
+    j++;
+    }
+  }
+  numvertices--;
+  
+  for (int i = 0; i < numvertices; i++){
+  vertices[i] = verticesTemp[i];
+  }
+
+  cout << "Vertice removido com sucesso =)" << endl;
+  reescreverArquivo();
+}
+
 /*Abre um arquivo e le o grafo, ele pega os vertices e
 caso estejam no formato correto ele insere, caso não
 ele apenas sai do programa.
@@ -121,12 +168,11 @@ ele chama obterindice pra ver se os vertices existem*/
 void Grafo::lergrafo() 
 {
 
-    string arquivo = "grafo.txt";
-    ifstream file(arquivo);
+    ifstream file(Nomearquivo);
 
 
     if (!file.is_open()) {
-        cerr << "Não foi possível abrir o arquivo " << arquivo << "." << endl;
+        cerr << "Não foi possível abrir o arquivo " << Nomearquivo << "." << endl;
         exit(EXIT_FAILURE);
     }
 
@@ -222,3 +268,13 @@ void Grafo::lergrafo()
 
     file.close();
 }
+/*
+void Grafo::reescreverArquivo()
+{
+  string nomeArquivo;
+  ofstream (nomeArquivo);
+
+  
+
+}
+*/
