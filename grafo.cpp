@@ -117,48 +117,51 @@ void Grafo::imprimirvertices()
 
 void Grafo::removervertice(string verticeEditar)
 {
-  bool existe = false;
-  for (int i = 0; i < maxvertices; i++){
-    if (vertices[i] == verticeEditar) {
-      existe = true;
+    bool existe = false;
+    int indiceVertice = -1;
+    for (int i = 0; i < numvertices; i++) {
+        if (vertices[i] == verticeEditar) {
+            existe = true;
+            indiceVertice = i;
+            break;
+        }
     }
-  }
 
-  if (existe == false) {
-      throw invalid_argument("O vertice não existe =(");
-  }
-  int vertice;
-  vertice = stoi(verticeEditar);
-  vertice--;
-  for (int i = 0; i < numvertices; i++) {
-    for (int j = 0; j < numvertices; j++) {
-        matrizadjacencias[i][vertice] = 0; 
+    if (!existe) {
+        throw invalid_argument("O vértice não existe =(");
     }
-  }
 
-  for (int i = 0; i < numvertices; i++) {
-    for (int j = 0; j < numvertices; j++) {
-        matrizadjacencias[vertice][j] = 0; 
-    }
-  }
-  
-  string verticesTemp[numvertices];
-  for (int i = 0; i < numvertices; i++) {
-    if (verticeEditar != vertices[i]) {
-    int j = 0;
-    verticesTemp[i] = vertices[i];
-    j++;
-    }
-  }
-  numvertices--;
-  
-  for (int i = 0; i < numvertices; i++){
-  vertices[i] = verticesTemp[i];
-  }
+    int vertice = stoi(verticeEditar) - 1;
 
-  cout << "Vertice removido com sucesso =)" << endl;
-  reescreverArquivo();
+    // Atualizar a matriz de adjacências
+    for (int i = vertice; i < numvertices - 1; i++) {
+        for (int j = 0; j < numvertices; j++) {
+            matrizadjacencias[i][j] = matrizadjacencias[i + 1][j];
+        }
+    }
+
+    for (int j = vertice; j < numvertices - 1; j++) {
+        for (int i = 0; i < numvertices; i++) {
+            matrizadjacencias[i][j] = matrizadjacencias[i][j + 1];
+        }
+    }
+
+    for (int i = 0; i < numvertices; i++) {
+        matrizadjacencias[numvertices - 1][i] = 0;
+        matrizadjacencias[i][numvertices - 1] = 0;
+    }
+
+    // Atualizar o array de vértices
+    for (int i = indiceVertice; i < numvertices - 1; i++) {
+        vertices[i] = vertices[i + 1];
+    }
+    numvertices--;
+
+    cout << "Vértice removido com sucesso =)" << endl;
+    reescreverArquivo();
 }
+
+
 
 /*Abre um arquivo e le o grafo, ele pega os vertices e
 caso estejam no formato correto ele insere, caso não
@@ -167,34 +170,22 @@ a leitura de arestas usa um vetor pra salvar a primeira posição do grafo e a s
 ele chama obterindice pra ver se os vertices existem*/
 void Grafo::lergrafo() 
 {
-
     ifstream file(Nomearquivo);
-
 
     if (!file.is_open()) {
         cerr << "Não foi possível abrir o arquivo " << Nomearquivo << "." << endl;
         exit(EXIT_FAILURE);
     }
 
-    
     string line;
     getline(file, line);
 
     // Verificando se a linha está no formato esperado
     size_t vertices_pos = line.find("V = {");
     size_t arestas_pos = line.find("}; A = {");
+
     if (vertices_pos == string::npos or arestas_pos == string::npos) {
         cerr << "Erro de formatação: falta {} encerrando os vértices ou arestas." << endl
-             << "Por favor, garanta que o formato no arquivo está no seguinte padrão: V = {1,2,...}; A = {(1,2),(2,3),...};" << endl;
-        file.close();
-        // Saindo do programa com status de falha
-        exit(EXIT_FAILURE);
-    }
-
-    // Verificando se os parênteses estão presentes nas arestas
-    string arestas_str = line.substr(arestas_pos);
-    if (arestas_str.find("(") == string::npos or arestas_str.find(")") == string::npos) {
-        cerr << "Erro de formatação: falta de parênteses nas arestas." << endl
              << "Por favor, garanta que o formato no arquivo está no seguinte padrão: V = {1,2,...}; A = {(1,2),(2,3),...};" << endl;
         file.close();
         // Saindo do programa com status de falha
@@ -216,6 +207,12 @@ void Grafo::lergrafo()
             inserevertice(vertex);
             vertex.clear();
         }
+    }
+
+    // Se não há arestas, encerra a função aqui
+    if (arestas_pos == string::npos) {
+        file.close();
+        return;
     }
 
     // Processa as arestas
@@ -268,13 +265,45 @@ void Grafo::lergrafo()
 
     file.close();
 }
-/*
+
+
 void Grafo::reescreverArquivo()
 {
-  string nomeArquivo;
-  ofstream (nomeArquivo);
+    ofstream arquivo(Nomearquivo);
 
-  
+    // Escreve os vértices
+    arquivo << "V = {";
+    if (numvertices > 0) {
+        for (int i = 0; i < numvertices; i++) {
+            if (i != numvertices - 1) {
+                arquivo << vertices[i] << ",";
+            } else {
+                arquivo << vertices[i] << "}";
+            }
+        }
+    } else {
+        arquivo << "}";
+    }
 
+    // Escreve as arestas
+    arquivo << "; A = {";
+    bool temArestas = false; // Verifica se há alguma aresta
+    for (int i = 0; i < numvertices; i++) {
+        for (int j = 0; j < numvertices; j++) {
+            if (matrizadjacencias[i][j] != 0) {
+                temArestas = true;
+                arquivo << "(" << vertices[i] << "," << vertices[j] << "),";
+            }
+        }
+    }
+
+    if (!temArestas) {
+        arquivo << "}";
+    } else {
+        // Remove a vírgula extra no final, se houver
+        arquivo.seekp(-1, ios_base::end);
+        arquivo << "}";
+    }
+
+    arquivo.close();
 }
-*/
