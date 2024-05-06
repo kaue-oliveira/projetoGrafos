@@ -23,8 +23,8 @@ int main() {
     
     grafo.imprimirvertices();
 
-    int grau =grafo.obtergrau("1");
-    cout << "Grau do vertice 1 = " << grau << endl;
+    int grau =grafo.obtergrau("2");
+    cout << "Grau do vertice 2 = " << grau << endl;
 
 
 
