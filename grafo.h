@@ -8,6 +8,8 @@
 #include <cstdlib>
 #include <string>
 #include <algorithm>
+#include "filadinamica.h"
+#include "pilhadinamica.h"
 using namespace std;
 
 class Grafo {
@@ -18,6 +20,7 @@ public:
     string* vertices;
     int** matrizadjacencias;
     bool direcionado; // Indica se o grafo é direcionado ou não
+    bool* marcador;
 
 
     Grafo(int max);
@@ -31,6 +34,11 @@ public:
     void lergrafo();
     void reescreverArquivo();
     void removervertice(string verticeEditar);
+    int qtdvertice();
+    int qtdarestas();
+    void limpamarcador();
+    void buscaemlargura(string origem, string destino);
+    void buscaemprofundidade(string origem, string destino);
 };
 
 #endif // GRAFO_H

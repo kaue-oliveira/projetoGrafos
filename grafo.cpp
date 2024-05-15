@@ -1,37 +1,42 @@
 // Arquivo grafo.cpp
 #include "grafo.h"
+#include "filadinamica.h"
+#include "pilhadinamica.h"
 const string Nomearquivo = "grafo.txt";
 
 /*Construtor para o grafo, ele inicia a matriz e tambem ajusta as arestas que existem, ou coisas do tipo*/
-Grafo::Grafo(int max) 
-{
-    numvertices = 0;
-    maxvertices = max;
-    arestanula = 0;
-    direcionado = false; 
+Grafo::Grafo(int max) //construtor
+    {
+        numvertices = 0;
+        maxvertices = max;
+        arestanula = 0;
 
-    vertices = new string[maxvertices];
+        marcador = new bool[maxvertices]; //novo
 
-    matrizadjacencias = new int* [maxvertices];
-    for (int i = 0; i < maxvertices; i++) {
-        matrizadjacencias[i] = new int[maxvertices];
-    }
+        vertices = new TipoItem[maxvertices];
 
-    for (int i = 0; i < maxvertices; i++) {
-        for (int j = 0; j < maxvertices; j++) {
-            matrizadjacencias[i][j] = arestanula;
+        matrizadjacencias = new int*[maxvertices];
+        for (int i=0 ; i<maxvertices ; i++){
+            matrizadjacencias[i] = new int[maxvertices];
+        }
+
+        for (int i=0 ; i<maxvertices ; i++){
+            for (int j=0 ; j<maxvertices ; j++){
+                matrizadjacencias[i][j] = arestanula;
+            }
         }
     }
-}
+
 /*Destrutor para o grafo, ele vai desalocando linhas e colunas do grafo*/
-Grafo::~Grafo() 
-{
-    delete[] vertices;
-    for (int i = 0; i < maxvertices; i++) {
-        delete[] matrizadjacencias[i];
+// No destrutor, libere a memória alocada para a matriz marcador
+    Grafo::~Grafo() //destrutor
+    {
+        delete [] vertices;
+        for (int i=0 ; i<maxvertices ; i++){
+            delete [] matrizadjacencias[i];
+        }
+        delete [] matrizadjacencias;
     }
-    delete[] matrizadjacencias;
-}
 /*Essa função é bem util pra verificar se um vertice existe ou não, caso não exista é retornado -1
 é importante mudar caso queira adicionar pesos nas arestas*/
 int Grafo::obterindice(string item) 
@@ -266,6 +271,24 @@ void Grafo::lergrafo()
     file.close();
 }
 
+int Grafo::qtdvertice()
+{
+  int num = numvertices;
+  return(num);
+}
+
+int Grafo::qtdarestas()
+{
+  int contadorArestas = 0;
+  for (int i = 0; i < numvertices; i++){
+    for (int j = 0; j < numvertices; j++){
+      if (matrizadjacencias[i][j] != 0){
+          contadorArestas++;
+      }
+    }
+  }
+  return(contadorArestas);
+}
 
 void Grafo::reescreverArquivo()
 {
@@ -307,4 +330,88 @@ void Grafo::reescreverArquivo()
 
     arquivo.close();
 }
-//
+
+void Grafo::limpamarcador()
+{
+    if (marcador != nullptr) {
+        for (int i = 0; i < maxvertices; i++) {
+            marcador[i] = false;
+        }
+    } else {
+        cerr << "Erro: Ponteiro marcador não inicializado." << endl;
+    }
+}
+
+
+void Grafo::buscaemlargura(string origem, string destino)
+{
+    filadinamica filavertices;
+    bool encontrado = false;
+    limpamarcador();
+
+    int indiceOrigem = obterindice(origem);
+    filavertices.inserir(origem);
+    marcador[indiceOrigem] = true; // Marcar a origem como visitada
+
+    while (!filavertices.estavazio() && !encontrado) {
+        string verticeatual = filavertices.remover();
+        cout << "Visitando: " << verticeatual << endl;
+
+        if (verticeatual == destino) {
+            cout << "Caminho encontrado!\n";
+            encontrado = true;
+        } else {
+            int indice = obterindice(verticeatual);
+            for (int i = 0; i < maxvertices; i++) {
+                if (matrizadjacencias[indice][i] != arestanula && !marcador[i]) {
+                    cout << "Enfileirando: " << vertices[i] << endl;
+                    filavertices.inserir(vertices[i]);
+                    marcador[i] = true; // Marcar o vértice como visitado
+                }
+            }
+        }
+    }
+
+    if (!encontrado) {
+        cout << "Caminho nao encontrado!\n";
+    }
+}
+
+
+
+    
+
+
+void Grafo::buscaemprofundidade(string origem, string destino)
+{
+    pilhadinamica pilhavertices;
+    bool encontrado = false;
+    limpamarcador();
+
+    int indiceOrigem = obterindice(origem);
+    pilhavertices.inserir(origem);
+    marcador[indiceOrigem] = true; // Marcar a origem como visitada
+
+    while (!pilhavertices.estavazio() && !encontrado) {
+        string verticeatual = pilhavertices.remover();
+        cout << "Visitando: " << verticeatual << endl;
+
+        if (verticeatual == destino) {
+            cout << "Caminho encontrado!\n";
+            encontrado = true;
+        } else {
+            int indice = obterindice(verticeatual);
+            for (int i = 0; i < maxvertices; i++) {
+                if (matrizadjacencias[indice][i] != arestanula && !marcador[i]) {
+                    cout << "Empilhando: " << vertices[i] << endl;
+                    pilhavertices.inserir(vertices[i]);
+                    marcador[i] = true; // Marcar o vértice como visitado
+                }
+            }
+        }
+    }
+
+    if (!encontrado) {
+        cout << "Caminho nao encontrado!\n";
+    }
+}

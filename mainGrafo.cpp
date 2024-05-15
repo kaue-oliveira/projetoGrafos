@@ -1,7 +1,10 @@
 #include <iostream>
 #include <fstream>
 #include "grafo.h"
+#include "filadinamica.h"
+#include "pilhadinamica.h"
 using namespace std;
+
 void exibirMenu() {
     cout << "====== Menu ======" << endl;
     cout << "1. Inserir vértice" << endl;
@@ -10,19 +13,23 @@ void exibirMenu() {
     cout << "4. Imprimir matriz de adjacências" << endl;
     cout << "5. Imprimir lista de vértices" << endl;
     cout << "6. Remover vértice" << endl;
-    cout << "7. Sair" << endl;
+    cout << "7. Numero de vertices" << endl;
+    cout << "8. Numero de arestas" << endl;
+    cout << "9. Busca em largura" << endl;
+    cout << "10. Busca em profundidade" << endl;
+    cout << "11. Sair" << endl;
     cout << "===================" << endl;
 }
 
 int main() {
     int numVertices = 100; // Supondo um número máximo de vértices
     int opcao;
+    string item1, item2;
     Grafo grafo(numVertices);
 
     // Pergunta se o grafo é direcionado
     char resposta;
-    cout << "O grafo é direcionado? (y/n): " << endl;
-    cout << "atenção isso pode causar mudanças no arquivo lido:" ;
+    cout << "O grafo é direcionado? (y/n): ";
     cin >> resposta;
     if (resposta == 'y' || resposta == 'Y') {
         grafo.direcionado = true;
@@ -75,13 +82,39 @@ int main() {
                 grafo.reescreverArquivo();
                 break;
             }
-            case 7:
+            case 7: {
+                cout << "A quantidade de vertices no grafo é: ";
+                cout << grafo.qtdvertice() << endl;
+                break;
+            }
+            case 8: {
+                cout << "A quantidade de arestas no grafo é: ";
+                cout << grafo.qtdarestas() << endl;
+                break;
+            }
+            case 9: {
+                cout << "Digite o vertice de origem: ";
+                cin >> item1;
+                cout << "Digite o vertice de destino: ";
+                cin >> item2;
+                grafo.buscaemlargura(item1, item2);
+                break;
+            }
+            case 10: {
+                cout << "Digite o vertice de origem: ";
+                cin >> item1;
+                cout << "Digite o vertice de destino: ";
+                cin >> item2;
+                grafo.buscaemprofundidade(item1, item2);
+                break;
+            }
+            case 11:
                 cout << "Saindo..." << endl;
                 break;
             default:
                 cout << "Opção inválida!" << endl;
         }
-    } while (opcao != 7);
+    } while (opcao != 11);
     
     grafo.reescreverArquivo();
     return 0;
