@@ -2,18 +2,19 @@
 #include "grafo.h"
 #include "filadinamica.h"
 #include "pilhadinamica.h"
+#include <queue>
 const string Nomearquivo = "grafo.txt";
 
 /*Construtor para o grafo, ele inicia a matriz e tambem ajusta as arestas que existem, ou coisas do tipo*/
-Grafo::Grafo(int max) //construtor
+Grafo::Grafo(int max) 
     {
         numvertices = 0;
         maxvertices = max;
         arestanula = 0;
 
-        marcador = new bool[maxvertices]; //novo
+        marcador = new bool[maxvertices]; //usado nas Buscas 
 
-        vertices = new TipoItem[maxvertices];
+        vertices = new TipoItem[maxvertices]; // TipoItem atualmente é string
 
         matrizadjacencias = new int*[maxvertices];
         for (int i=0 ; i<maxvertices ; i++){
@@ -29,7 +30,7 @@ Grafo::Grafo(int max) //construtor
 
 /*Destrutor para o grafo, ele vai desalocando linhas e colunas do grafo*/
 // No destrutor, libere a memória alocada para a matriz marcador
-    Grafo::~Grafo() //destrutor
+    Grafo::~Grafo() 
     {
         delete [] vertices;
         for (int i=0 ; i<maxvertices ; i++){
@@ -46,11 +47,16 @@ int Grafo::obterindice(string item)
             return i;
         }
     }
-    return -1; // Retorna -1 se o vértice não for encontrado
+    return -1;
 }
-/*Insere um vertice no grafo(util pra construir ou editar)*/
+/*Insere um vertice no grafo(util pra construir ou editar), não é possivel ter dois vertices com o mesmo nome*/
 void Grafo::inserevertice(string item) 
 {
+  for (int i = 0; i < numvertices; i++){
+    if (item == vertices[i]){
+      cerr << "Ocorreu um erro pois esse vertice ja existe." << endl;
+    }
+  }
     vertices[numvertices] = item;
     numvertices++;
 }
@@ -71,8 +77,54 @@ void Grafo::inserearesta(string Nosaida, string Noentrada)
     }
 }
 
-/*Essa função pode ser bem util futuramente*/
-int Grafo::obtergrau(string item) 
+/*Essa função pode ser bem util futuramente, ele verifica se o grafo é direcionado ou não, e exibe 
+na saida padrão o grau do vertice, ele usa for pra achar o grau e um contador pra ir somando o grau*/
+void Grafo::obtergrau(string item) 
+{
+    int linha = obterindice(item);
+    if (linha == -1) {
+        cout << "O vertice " << item << " não existe no grafo." << endl;
+        return;
+    }
+
+    if (!direcionado) {
+        int grau = 0;
+        // Contar o número de arestas de saída
+        for (int i = 0; i < maxvertices; i++) {
+            if (matrizadjacencias[linha][i] != arestanula) {
+                grau++;
+            }
+        }
+        // Contar o número de arestas de entrada
+        for (int i = 0; i < maxvertices; i++) {
+            if (matrizadjacencias[i][linha] != arestanula) {
+                grau++;
+            }
+        }
+        cout << "O vertice " << item << " tem grau " << grau << endl;
+    } else {
+        int saida = 0;
+        int entrada = 0;
+        // Contar o número de arestas de saída
+        for (int i = 0; i < numvertices; i++) {
+            if (matrizadjacencias[linha][i] != arestanula) {
+                saida++;
+            }
+        }
+        // Contar o número de arestas de entrada
+        for (int i = 0; i < numvertices; i++) {
+            if (matrizadjacencias[i][linha] != arestanula) {
+                entrada++;
+            }
+        }
+        cout << "O vertice " << item << " tem grau de saída " << saida
+        << " e grau de entrada " << entrada << endl;
+    }
+}
+
+/*O obtergrauaxu foi criado para que o grau de um vertice seja retornado
+e não apenas exibido na saida padrão*/
+int Grafo::obtergrauaux(string item) 
 {
     int linha = obterindice(item);
     int grau = 0;
@@ -88,11 +140,8 @@ int Grafo::obtergrau(string item)
         grau++;
       }
     }
-    return grau;
-
-    
+    return grau;    
 }
-
 /*Impressão da matriz de adjacências*/
 void Grafo::imprimirmatriz() 
 {
@@ -119,7 +168,9 @@ void Grafo::imprimirvertices()
         cout << endl;
     }
 }
-
+/*Para remover o vertice é necessario apagar ele e quem depende dele
+as arestas são atualizadas para 0, essa linha e coluna são apagadas e o vetor
+que guarda os vertices é atualizado(esse vetor existe pois facilita muito algumas aplicações)*/
 void Grafo::removervertice(string verticeEditar)
 {
     bool existe = false;
@@ -133,8 +184,8 @@ void Grafo::removervertice(string verticeEditar)
     }
 
     if (!existe) {
-        throw invalid_argument("O vértice não existe =(");
-    }
+        cerr << "O vértice não existe =(" << endl;
+    } else {
 
     int vertice = stoi(verticeEditar) - 1;
 
@@ -164,6 +215,7 @@ void Grafo::removervertice(string verticeEditar)
 
     cout << "Vértice removido com sucesso =)" << endl;
     reescreverArquivo();
+    }
 }
 
 
@@ -271,12 +323,14 @@ void Grafo::lergrafo()
     file.close();
 }
 
+/*A quantidade total de vertices ja esta presente na criação do grafo
+usamos isso nesse codigo pois facilita muito alguns metodos*/
 int Grafo::qtdvertice()
 {
-  int num = numvertices;
-  return(num);
+  return(numvertices);
 }
-
+/*como o valor padrão para a ausencia de aresta nesse codigo é 0
+se usa dois for e um contador pra ver o que na matriz não tem 0*/
 int Grafo::qtdarestas()
 {
   int contadorArestas = 0;
@@ -289,7 +343,7 @@ int Grafo::qtdarestas()
   }
   return(contadorArestas);
 }
-
+/**/
 void Grafo::reescreverArquivo()
 {
     ofstream arquivo(Nomearquivo);
@@ -345,6 +399,17 @@ void Grafo::limpamarcador()
 
 void Grafo::buscaemlargura(string origem, string destino)
 {
+    bool torigem = false;
+    bool tdestino = false;
+    for (int i = 0; i < numvertices; i++){
+      if (origem == vertices[i]){
+        torigem = true;
+      }
+      if (destino == vertices[i]){
+        tdestino = true;
+      }
+    }
+    if (tdestino and torigem == true){
     filadinamica filavertices;
     bool encontrado = false;
     limpamarcador();
@@ -375,15 +440,22 @@ void Grafo::buscaemlargura(string origem, string destino)
     if (!encontrado) {
         cout << "Caminho nao encontrado!\n";
     }
+    }  
 }
-
-
-
-    
-
 
 void Grafo::buscaemprofundidade(string origem, string destino)
 {
+    bool torigem = false;
+    bool tdestino = false;
+    for (int i = 0; i < numvertices; i++){
+      if (origem == vertices[i]){
+        torigem = true;
+      }
+      if (destino == vertices[i]){
+        tdestino = true;
+      }
+    }
+    if (tdestino and torigem == true){
     pilhadinamica pilhavertices;
     bool encontrado = false;
     limpamarcador();
@@ -392,7 +464,7 @@ void Grafo::buscaemprofundidade(string origem, string destino)
     pilhavertices.inserir(origem);
     marcador[indiceOrigem] = true; // Marcar a origem como visitada
 
-    while (!pilhavertices.estavazio() && !encontrado) {
+    while (!pilhavertices.estavazio() and !encontrado) {
         string verticeatual = pilhavertices.remover();
         cout << "Visitando: " << verticeatual << endl;
 
@@ -402,7 +474,7 @@ void Grafo::buscaemprofundidade(string origem, string destino)
         } else {
             int indice = obterindice(verticeatual);
             for (int i = 0; i < maxvertices; i++) {
-                if (matrizadjacencias[indice][i] != arestanula && !marcador[i]) {
+                if (matrizadjacencias[indice][i] != arestanula and !marcador[i]) {
                     cout << "Empilhando: " << vertices[i] << endl;
                     pilhavertices.inserir(vertices[i]);
                     marcador[i] = true; // Marcar o vértice como visitado
@@ -414,4 +486,189 @@ void Grafo::buscaemprofundidade(string origem, string destino)
     if (!encontrado) {
         cout << "Caminho nao encontrado!\n";
     }
+    } else {
+      for (int i = 0; i < numvertices; i++){
+        cout << vertices[i] << " ";
+      }
+      cout << endl;
+      cerr << "Erro pois um dos vertices não existe, verifique os vertices existentes " << endl;
+    }
+}
+
+void Grafo::removeraresta(string origem, string destino)
+{
+    if (direcionado){
+    int verticeorigem = stoi(origem) - 1;
+    int verticedestino = stoi(destino) - 1;
+    
+    // Verifica se os vértices são válidos
+    if (verticeorigem >= 0 and verticeorigem < numvertices and verticedestino >= 0 and verticedestino < numvertices) {
+        matrizadjacencias[verticeorigem][verticedestino] = 0;
+        // Se o grafo for não direcionado, descomente a linha abaixo
+        // matrizadjacencias[verticedestino][verticeorigem] = 0;
+    }
+    reescreverArquivo();
+    } else {
+    int verticeorigem = stoi(origem) - 1;
+    int verticedestino = stoi(destino) - 1;
+    
+    // Verifica se os vértices são válidos
+    if (verticeorigem >= 0 and verticeorigem < numvertices and verticedestino >= 0 and verticedestino < numvertices) {
+        matrizadjacencias[verticeorigem][verticedestino] = 0;
+        // Se o grafo for não direcionado, descomente a linha abaixo
+        matrizadjacencias[verticedestino][verticeorigem] = 0;
+    }
+    }
+}
+
+
+bool Grafo::ehConexo() {
+    if (numvertices == 0) {
+        return true; // Um grafo vazio pode ser considerado conexo
+    }
+
+    // Inicializa o vetor de visitados
+    bool *visitados = new bool[numvertices];
+    for (int i = 0; i < numvertices; i++) {
+        visitados[i] = false;
+    }
+
+    // Fila para a BFS
+    queue<int> fila;
+
+    // Começa a BFS a partir do primeiro vértice
+    fila.push(0);
+    visitados[0] = true;
+    int visitadosCount = 1;
+
+    while (!fila.empty()) {
+        int verticeAtual = fila.front();
+        fila.pop();
+
+        for (int i = 0; i < numvertices; i++) {
+            if (matrizadjacencias[verticeAtual][i] != arestanula && !visitados[i]) {
+                fila.push(i);
+                visitados[i] = true;
+                visitadosCount++;
+            }
+        }
+    }
+
+    delete[] visitados;
+
+    // Se todos os vértices foram visitados, o grafo é conexo
+    return visitadosCount == numvertices;
+}
+
+void Grafo::possuiciclos()
+{
+  int contador = 0;
+  for (int i = 0; i < numvertices; i++){
+      if (matrizadjacencias[i][i] == 1){
+        contador ++;
+      }
+  }
+
+  cout << "O grafo possui " << contador << " ciclos" << endl;
+
+}
+
+void Grafo::eheuleriano()
+{
+    int grauImpar = 0;
+
+    for (int i = 0; i < numvertices; i++) {
+        int grau = obtergrauaux(vertices[i]);
+        if (grau % 2 != 0) {
+            grauImpar++;
+        }
+    }
+
+    if (grauImpar == 0) {
+        cout << "Grafo é euleriano" << endl;
+    } else if (grauImpar == 2) {
+        cout << "Grafo é semieuleriano" << endl;
+    } else {
+        cout << "Grafo não é euleriano" << endl;
+    }
+}
+
+bool Grafo::ehfortementeconexo() {
+    // Inicializa um array para marcar os vértices visitados
+    bool* visitado = new bool[numvertices];
+    for (int i = 0; i < numvertices; ++i) {
+        visitado[i] = false;
+    }
+    
+    pilhadinamica pilha;
+    
+    
+    pilha.inserir(vertices[0]);
+    while (!pilha.estavazio()) {
+        string u_str = pilha.remover();
+        int u = stoi(u_str); 
+        
+        if (!visitado[u]) {
+            visitado[u] = true;
+            
+            // Percorre todos os vértices adjacentes ao vértice atual
+            for (int i = 0; i < numvertices; i++) {
+                // Se houver uma aresta entre os vértices e o vértice adjacente não foi visitado
+                if (matrizadjacencias[u][i] != arestanula and !visitado[i]) {
+                    // Insere o vértice adjacente na pilha para visita posterior
+                    pilha.inserir(to_string(i)); 
+                }
+            }
+        }
+    }
+    
+    bool fortementeConexo = true;
+    for (int i = 0; i < numvertices; ++i) {
+        // Se algum vértice não foi visitado, o grafo não é fortemente conexo
+        if (!visitado[i]) {
+            fortementeConexo = false;
+            break;
+        }
+    }
+
+    delete[] visitado;
+    
+    return fortementeConexo;
+}
+/*Verifica existencia do vertice para inserir ele caso o 
+vertice não exista*/
+void Grafo::verificaExistencia(string vertice)
+{
+  bool teste = true;
+  for (int i = 0; i < numvertices; i++){
+    if (vertice == vertices[i]){
+      teste = false;
+    }
+  }
+
+  if (teste){
+    inserevertice(vertice);
+  } else {
+    cerr << "Esse nome de vertice ja existe, tente novamente" << endl;
+  }
+}
+
+
+void Grafo::verificaExistenciaAresta(string saida, string entrada)
+{
+  bool testeSaida = false;
+  bool testeEntrada = true;
+  for (int i = 0; i < numvertices; i++){
+    if (vertices[i] == saida){
+      testeSaida = true;
+    }
+    if (vertices[i] == entrada){
+      testeEntrada = true;
+    }
+  }
+  if (testeEntrada and testeSaida == true){
+    inserearesta(saida, entrada);
+  } else {
+    cerr << "Um dos vertices de entrada ou saida, não existe" << endl;
+  }
 }

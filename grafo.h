@@ -28,17 +28,28 @@ public:
     int obterindice(string item);
     void inserevertice(string item);
     void inserearesta(string Nosaida, string Noentrada);
-    int obtergrau(string item);
+    void obtergrau(string item);
     void imprimirmatriz();
     void imprimirvertices();
     void lergrafo();
     void reescreverArquivo();
+    void removeraresta(string origem, string destino);
     void removervertice(string verticeEditar);
     int qtdvertice();
     int qtdarestas();
     void limpamarcador();
     void buscaemlargura(string origem, string destino);
     void buscaemprofundidade(string origem, string destino);
+    bool ehConexo();
+    void possuiciclos();
+    void eheuleriano();
+    int obtergrauaux(string item);
+    bool ehfortementeconexo();
+    void verificaExistencia(string vertice);
+    void verificaExistenciaAresta(string origem, string entrada);
 };
 
-#endif // GRAFO_H
+#endif // GRAFO.H       
+
+
+
