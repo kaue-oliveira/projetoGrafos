@@ -14,9 +14,10 @@ class pilhadinamica{
     ~pilhadinamica(); //destrutor
     bool estavazio(); //isempty
     bool estacheio(); //tem memória //isfull
-    void inserir(TipoItem item); //push
-    TipoItem remover(); //pop
+    void inserir(string item); //push
+    string remover(); //pop
     void imprimir(); //print
+    string topo();
 
     
 };

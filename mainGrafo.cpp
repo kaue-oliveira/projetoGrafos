@@ -29,7 +29,8 @@ void exibirMenuDirecionado() {
     cout << "| 13. Verificar quantidade de ciclos               |" << endl;
     cout << "| 14. Verificar se é fortemente conexo             |" << endl;
     cout << "| 15. Verificar se grafo é euleriano               |" << endl;
-    cout << "| 16. Sair                                         |" << endl;
+    cout << "| 16. Algoritmo de prim                            |" << endl;
+    cout << "| 17. Sair                                         |" << endl;
     cout << "\033[0m"; 
     cout << "\033[1m\033[33m";
     cout << "====================================================" << endl;
@@ -59,7 +60,8 @@ void exibirMenu() {
     cout << "| 12. Verificar se é conexo                        |" << endl;
     cout << "| 13. Verificar quantidade de ciclos               |" << endl;
     cout << "| 14. Verificar se grafo é euleriano               |" << endl;
-    cout << "| 15. Sair                                         |" << endl;
+    cout << "| 15. Algoritmo de prim                            |" << endl;
+    cout << "| 16. Sair                                         |" << endl;
     cout << "\033[0m"; 
     cout << "\033[1m\033[33m";
     cout << "====================================================" << endl;
@@ -82,7 +84,7 @@ void animacaoTransicao() {
 }
 
 int main() {
-    int numVertices = 100; // Supondo um número máximo de vértices
+    unsigned int numVertices = 25000; // Supondo um número máximo de vértices
     int opcao;
     string item1, item2;
     Grafo grafo(numVertices);
@@ -105,7 +107,7 @@ int main() {
         switch (opcao) {
             case 1: {
                 animacaoTransicao();
-                string vertice;
+                string vertice; 
                 cout << "Digite o nome do vértice a ser inserido: ";
                 cin >> vertice;
                 grafo.verificaExistencia(vertice);
@@ -268,20 +270,28 @@ int main() {
             }
             case 15: {
                 animacaoTransicao();
-                grafo.eheuleriano();
+                grafo.prim();
                 cout << "Pressione qualquer tecla para voltar ao menu principal...";
                 cin.ignore();
                 cin.get();
                 break;
             }
-            case 16:
+            case 16: {
+                animacaoTransicao();
+                grafo.prim();
+                cout << "Pressione qualquer tecla para voltar ao menu principal...";
+                cin.ignore();
+                cin.get();
+                break;
+            }
+            case 17:
                 cout << "Obrigado por usar o nosso sitema =)" << endl;
                 break;
             default:
                 cout << "Opção inválida!" << endl;
         }
         usleep(500000); // Aguarda 5.5 segundos para dar tempo de ler antes de limpar a tela
-    } while (opcao != 16);
+    } while (opcao != 17);
     
     grafo.reescreverArquivo();
     } else {
@@ -449,17 +459,28 @@ int main() {
                 cin.get();
                 break;
             }
-            case 15:
+            case 15: {
+                animacaoTransicao();
+                grafo.prim();
+                cout << "Pressione qualquer tecla para voltar ao menu principal...";
+                cin.ignore();
+                cin.get();
+                break;
+            }
+            case 16:
                 cout << "Obrigado por usar o nosso sitema =)" << endl;
                 break;
             default:
                 cout << "Opção inválida!" << endl;
         }
         usleep(500000); // Aguarda 5.5 segundos para dar tempo de ler antes de limpar a tela
-    } while (opcao != 15);
+    } while (opcao != 16);
     
     grafo.reescreverArquivo();
 
     }
+
+
+
     return 0;
 }

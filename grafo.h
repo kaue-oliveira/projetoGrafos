@@ -18,7 +18,7 @@ public:
     int maxvertices;
     int numvertices;
     string* vertices;
-    int** matrizadjacencias;
+    unsigned int** matrizadjacencias;
     bool direcionado; // Indica se o grafo é direcionado ou não
     bool* marcador;
 
@@ -47,6 +47,9 @@ public:
     bool ehfortementeconexo();
     void verificaExistencia(string vertice);
     void verificaExistenciaAresta(string origem, string entrada);
+    void prim();
+    
+    
 };
 
 #endif // GRAFO.H       

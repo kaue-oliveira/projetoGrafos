@@ -5,7 +5,7 @@
 
 using namespace std;
 
-typedef string TipoItem;
+
 
 struct No
 {

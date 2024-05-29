@@ -16,9 +16,10 @@ class filadinamica{
     ~filadinamica(); // Destrutor  
     bool estavazio(); //isEmpty
     bool estacheio(); //isFull
-    void inserir(TipoItem item); //enqueue //push
-    TipoItem remover(); //dequeue //pop
+    void inserir(string item); //enqueue //push
+    string remover(); //dequeue //pop
     void imprimir(); //print
+    string primeiroFila();
   
 };
 
