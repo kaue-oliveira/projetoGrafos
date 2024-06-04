@@ -9,23 +9,29 @@
 #include <stack>
 #include <climits> //para usar INT_MAX
 #include <vector>
+#include <sstream> // Incluir a biblioteca <sstream> para usar o stringstream
+#include <list>
+
 const string Nomearquivo = "grafo.txt";
 using namespace std::chrono;
+using namespace std;
 
 /*Construtor para o grafo, ele inicia a matriz e tambem ajusta as arestas que existem, ou coisas do tipo*/
-Grafo::Grafo(int max) 
+Grafo::Grafo(int max, int nulo) 
 {
     numvertices = 0;
     maxvertices = max;
-    arestanula = 0;
+    nulo = INT_MIN;
+    arestanula = nulo;
+    valorado = false;
 
     marcador = new bool[maxvertices]; //usado nas Buscas 
 
     vertices = new string[maxvertices]; 
 
-    matrizadjacencias = new unsigned*[maxvertices];
+    matrizadjacencias = new int *[maxvertices];
     for (int i=0 ; i<maxvertices ; i++){
-        matrizadjacencias[i] = new unsigned[maxvertices];
+        matrizadjacencias[i] = new int[maxvertices];
     }
 
     for (int i=0 ; i<maxvertices ; i++){
@@ -69,7 +75,7 @@ void Grafo::inserevertice(string item)
 }
 
 /*Insere um grafo no vertice(util pra construir ou editar)*/
-void Grafo::inserearesta(string Nosaida, string Noentrada) 
+void Grafo::inserearesta(string Nosaida, string Noentrada) //caso não seja valorado
 {
     int linha = obterindice(Nosaida);
     int coluna = obterindice(Noentrada);
@@ -80,6 +86,25 @@ void Grafo::inserearesta(string Nosaida, string Noentrada)
         } else {
             matrizadjacencias[linha][coluna] = 1; // Para grafos não direcionados
             matrizadjacencias[coluna][linha] = 1; // Para grafos não direcionados
+        }
+    }
+}
+
+void Grafo::inserearestaValorado(string Nosaida, string Noentrada, string peso) {
+    int linha = obterindice(Nosaida);
+    int coluna = obterindice(Noentrada);
+    int pesoNovo = stoi(peso);
+    if (linha != -1 and coluna != -1) {
+        // Verifica se o peso é um número válido antes de atribuir à matriz de adjacências
+        if (pesoNovo >= INT_MIN && pesoNovo <= INT_MAX) {
+            if (direcionado) {
+                matrizadjacencias[linha][coluna] = pesoNovo;
+            } else {
+                matrizadjacencias[linha][coluna] = pesoNovo;
+                matrizadjacencias[coluna][linha] = pesoNovo;
+            }
+        } else {
+            cerr << "Erro: Peso inválido na aresta (" << Nosaida << ", " << Noentrada << ", " << peso << "). A aresta será ignorada." << endl;
         }
     }
 }
@@ -168,7 +193,7 @@ void Grafo::imprimirvertices()
     for (int i = 0; i < numvertices; i++) {
         cout << vertices[i];
         for (int j = 0; j < numvertices; j++){
-            if (matrizadjacencias[i][j] != 0){
+            if (matrizadjacencias[i][j] != arestanula){
                 cout << "->" << vertices[j];
             }
         }
@@ -210,8 +235,8 @@ void Grafo::removervertice(string verticeEditar)
     }
 
     for (int i = 0; i < numvertices; i++) {
-        matrizadjacencias[numvertices - 1][i] = 0;
-        matrizadjacencias[i][numvertices - 1] = 0;
+        matrizadjacencias[numvertices - 1][i] = arestanula;
+        matrizadjacencias[i][numvertices - 1] = arestanula;
     }
 
     // Atualizar o array de vértices
@@ -224,6 +249,46 @@ void Grafo::removervertice(string verticeEditar)
     reescreverArquivo();
     }
 }
+bool Grafo::verifica(const string& line) {
+    size_t vertices_pos = line.find("V = {");
+    size_t arestas_pos = line.find("}; A = {");
+
+    if (vertices_pos == string::npos || arestas_pos == string::npos) {
+        cerr << "Erro de formatação: falta {} encerrando os vértices ou arestas." << endl
+             << "Por favor, garanta que o formato no arquivo está no seguinte padrão: V = {a,b,c,...}; A = {(a,b),(b,c),...}; ou V = {a,b,c,...}; A = {(a,b,1),(b,c,-2),...};" << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    // Extrai a substring que contém as arestas
+    size_t pos = arestas_pos + 6;
+    size_t end_pos = line.find("};", pos);
+    if (end_pos == string::npos) {
+        cerr << "Erro de formatação: falta '};' encerrando as arestas." << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    string arestas_str = line.substr(pos, end_pos - pos);
+
+    // Verifica se há valores associados às arestas (grafos valorados)
+    size_t open_paren_pos = arestas_str.find('(');
+    while (open_paren_pos != string::npos) {
+        size_t close_paren_pos = arestas_str.find(')', open_paren_pos);
+        if (close_paren_pos == string::npos) {
+            cerr << "Erro de formatação: falta ')' encerrando uma aresta." << endl;
+            exit(EXIT_FAILURE);
+        }
+
+        string aresta = arestas_str.substr(open_paren_pos + 1, close_paren_pos - open_paren_pos - 1);
+        if (count(aresta.begin(), aresta.end(), ',') == 2) {
+            return true; // Encontrou uma aresta com 3 elementos, indicando um grafo valorado
+        }
+
+        open_paren_pos = arestas_str.find('(', close_paren_pos);
+    }
+
+    return false;
+}
+
 
 
 
@@ -232,8 +297,7 @@ caso estejam no formato correto ele insere, caso não
 ele apenas sai do programa.
 a leitura de arestas usa um vetor pra salvar a primeira posição do grafo e a segunda
 ele chama obterindice pra ver se os vertices existem*/
-void Grafo::lergrafo() 
-{
+void Grafo::lergrafo() {
     ifstream file(Nomearquivo);
 
     if (!file.is_open()) {
@@ -248,29 +312,30 @@ void Grafo::lergrafo()
     size_t vertices_pos = line.find("V = {");
     size_t arestas_pos = line.find("}; A = {");
 
-    if (vertices_pos == string::npos or arestas_pos == string::npos) {
+    if (vertices_pos == string::npos || arestas_pos == string::npos) {
         cerr << "Erro de formatação: falta {} encerrando os vértices ou arestas." << endl
-             << "Por favor, garanta que o formato no arquivo está no seguinte padrão: V = {1,2,...}; A = {(1,2),(2,3),...};" << endl;
+             << "Por favor, garanta que o formato no arquivo está no seguinte padrão: V = {a,b,c,...}; A = {(a,b),(b,c),...}; ou V = {a,b,c,...}; A = {(a,b,1),(b,c,-2),...};" << endl;
         file.close();
-        // Saindo do programa com status de falha
         exit(EXIT_FAILURE);
     }
 
+    bool isValorado = verifica(line);
+    if (isValorado){
+      valorado = true;
+    } else {
+      valorado = false;
+    }
+
     // Extrai a substring que contém os vértices
-    size_t pos = vertices_pos + 5; // Encontra o início dos vértices
-    size_t end_pos = arestas_pos;
+    size_t pos = vertices_pos + 5;
+    size_t end_pos = line.find("}", pos);
     string vertices_str = line.substr(pos, end_pos - pos);
 
     // Processa os vértices
+    stringstream ss(vertices_str);
     string vertex;
-    for (size_t i = 0; i <= vertices_str.size(); i++) {
-        if (isdigit(vertices_str[i])) {
-            vertex += vertices_str[i];
-        }
-        else if (!vertex.empty()) {
-            inserevertice(vertex);
-            vertex.clear();
-        }
+    while (getline(ss, vertex, ',')) {
+        inserevertice(vertex); // Não removemos espaços em branco nos vértices
     }
 
     // Se não há arestas, encerra a função aqui
@@ -279,56 +344,38 @@ void Grafo::lergrafo()
         return;
     }
 
-    // Processa as arestas
-    pos = arestas_pos + 6; // Encontra o início das arestas
-    end_pos = line.find("};");
+    // Extrai e processa as arestas
+    pos = arestas_pos + 6;
+    end_pos = line.find("};", pos);
     string arestas_content = line.substr(pos, end_pos - pos);
 
+    // Processa as arestas sem remover espaços em branco
+    stringstream arestas_ss(arestas_content);
     string aresta;
-    string nos[2];
-    int peso = 1; // Assumindo peso padrão de 1 para todas as arestas
-    for (size_t i = 0; i <= arestas_content.size(); i++) {
-        if (arestas_content[i] == '(') {
-            i++; // Ignora o '('
-            while (arestas_content[i] != ')') {
-                if (isdigit(arestas_content[i])) {
-                    aresta += arestas_content[i];
-                }
-                else if (!aresta.empty()) {
-                    nos[0] = aresta;
-                    aresta.clear();
-                }
-                i++;
-            }
-            if (!nos[0].empty()) {
-                i++; // Pula o ','
-                while (isdigit(arestas_content[i])) {
-                    aresta += arestas_content[i];
-                    i++;
-                }
-                nos[1] = aresta;
+    while (getline(arestas_ss, aresta, ')')) {
+        size_t open_pos = aresta.find('(');
+        if (open_pos != string::npos) {
+            string elementos = aresta.substr(open_pos + 1);
+            stringstream elementos_ss(elementos);
+            string no1, no2, valor;
 
-                // Verifica se os vértices existem antes de adicionar a aresta
-                int indice1 = obterindice(nos[0]);
-                int indice2 = obterindice(nos[1]);
-                if (indice1 != -1 and indice2 != -1) {
-                    inserearesta(nos[0], nos[1]);
-                } else {
-                    cerr << "Erro: Aresta inválida, vértice não encontrado." << endl
-                         << "Por favor, garanta que o formato no arquivo está no seguinte padrão: V = {1,2,...}; A = {(1,2),(2,3),...};" << endl;
-                    file.close();
-                    // Saindo do programa com status de falha
-                    exit(EXIT_FAILURE);
-                }
-                aresta.clear();
-                nos[0].clear();
-                nos[1].clear();
+            getline(elementos_ss, no1, ',');
+            getline(elementos_ss, no2, ',');
+            
+            if (isValorado) {
+                getline(elementos_ss, valor, ',');
+                inserearestaValorado(no1, no2, valor); // Mantemos o valor como string
+            } else {
+                inserearesta(no1, no2);
             }
         }
     }
 
     file.close();
 }
+
+
+
 
 /*A quantidade total de vertices ja esta presente na criação do grafo
 usamos isso nesse codigo pois facilita muito alguns metodos*/
@@ -343,7 +390,7 @@ int Grafo::qtdarestas()
   int contadorArestas = 0;
   for (int i = 0; i < numvertices; i++){
     for (int j = 0; j < numvertices; j++){
-      if (matrizadjacencias[i][j] != 0){
+      if (matrizadjacencias[i][j] != arestanula){
           contadorArestas++;
       }
     }
@@ -351,22 +398,33 @@ int Grafo::qtdarestas()
   return(contadorArestas);
 }
 /**/
-void Grafo::reescreverArquivo()
-{
+void Grafo::reescreverArquivo() {
     ofstream arquivo(Nomearquivo);
+
+    if (!arquivo.is_open()) {
+        cerr << "Não foi possível abrir o arquivo " << Nomearquivo << "." << endl;
+        return;
+    }
 
     // Escreve os vértices
     arquivo << "V = {";
-    if (numvertices > 0) {
-        for (int i = 0; i < numvertices; i++) {
-            if (i != numvertices - 1) {
-                arquivo << vertices[i] << ",";
-            } else {
-                arquivo << vertices[i] << "}";
+    for (int i = 0; i < numvertices; i++) {
+        arquivo << vertices[i];
+        if (i != numvertices - 1) {
+            arquivo << ",";
+        }
+    }
+    arquivo << "}";
+
+    // Verifica se o grafo é valorado
+    bool isValorado = false;
+    for (int i = 0; i < numvertices && !isValorado; i++) {
+        for (int j = 0; j < numvertices; j++) {
+            if (matrizadjacencias[i][j] != arestanula && matrizadjacencias[i][j] != 1) {
+                isValorado = true;
+                break;
             }
         }
-    } else {
-        arquivo << "}";
     }
 
     // Escreve as arestas
@@ -374,177 +432,286 @@ void Grafo::reescreverArquivo()
     bool temArestas = false; // Verifica se há alguma aresta
     for (int i = 0; i < numvertices; i++) {
         for (int j = 0; j < numvertices; j++) {
-            if (matrizadjacencias[i][j] != 0) {
+            if (matrizadjacencias[i][j] != arestanula) {
                 temArestas = true;
-                arquivo << "(" << vertices[i] << "," << vertices[j] << "),";
+                arquivo << "(" << vertices[i] << "," << vertices[j];
+                if (isValorado) {
+                    arquivo << "," << matrizadjacencias[i][j];
+                }
+                arquivo << "),";
             }
         }
     }
 
-    if (!temArestas) {
-        arquivo << "}";
-    } else {
-        // Remove a vírgula extra no final, se houver
+    if (temArestas) {
+        // Remove a vírgula extra no final
         arquivo.seekp(-1, ios_base::end);
-        arquivo << "}";
     }
+    arquivo << "};";
 
     arquivo.close();
 }
 
 void Grafo::limpamarcador()
 {
-    if (marcador != nullptr) {
-        for (int i = 0; i < maxvertices; i++)
-         {
-            marcador[i] = false;
+    for (int i = 0; i<maxvertices ; i++){
+    marcador[i] = false;    
+    }   
+}
+
+void Grafo::buscaemlarguraArvore() {
+    if (ehConexo()) {
+        vector<int> pais(numvertices, -1);
+        vector<int> distancia(numvertices, INT_MAX);
+        vector<bool> visitado(numvertices, false);
+
+        auto executarBuscaEmLargura = [&](int inicio) {
+            queue<int> fila;
+            fila.push(inicio);
+            visitado[inicio] = true;
+            distancia[inicio] = 0;
+
+            while (!fila.empty()) {
+                int u = fila.front();
+                fila.pop();
+
+                for (int v = 0; v < numvertices; ++v) {
+                    if (matrizadjacencias[u][v] != arestanula && !visitado[v]) {
+                        fila.push(v);
+                        visitado[v] = true;
+                        distancia[v] = distancia[u] + 1;
+                        pais[v] = u;
+                    }
+                }
+            }
+        };
+
+        for (int i = 0; i < numvertices; i++) {
+            if (!visitado[i]) {
+                executarBuscaEmLargura(i);
+            }
+        }
+
+        cout << "Árvore de busca em largura:\n";
+        for (int i = 0; i < numvertices; ++i) {
+            if (pais[i] != -1) {
+                cout << "(" << vertices[pais[i]] << ", " << vertices[i] << ") - Distância: " << distancia[i] << "\n";
+            }
         }
     } else {
-        cerr << "Erro: Ponteiro marcador não inicializado." << endl;
+        cerr << "Grafo não é conexo, não é possível executar busca em largura." << endl;
     }
 }
 
-void Grafo::buscaemlargura(string origem, string destino) 
-{
-    bool torigem = false;
-    bool tdestino = false;
-    for (int i = 0; i < numvertices; i++) {
-        if (origem == vertices[i]) {
-            torigem = true;
+
+
+void Grafo::buscaemprofundidadeArvore() {
+    if (ehConexo()) {
+        vector<int> pais(numvertices, -1);
+        vector<int> distancia(numvertices, INT_MAX);
+        vector<bool> visitado(numvertices, false);
+
+        auto executarBuscaEmProfundidade = [&](int inicio) {
+            stack<int> pilha;
+            pilha.push(inicio);
+            visitado[inicio] = true;
+            distancia[inicio] = 0;
+
+            while (!pilha.empty()) {
+                int u = pilha.top();
+                pilha.pop();
+
+                for (int v = 0; v < numvertices; ++v) {
+                    if (matrizadjacencias[u][v] != arestanula && !visitado[v]) {
+                        pilha.push(v);
+                        visitado[v] = true;
+                        distancia[v] = distancia[u] + 1;
+                        pais[v] = u;
+                    }
+                }
+            }
+        };
+
+        for (int i = 0; i < numvertices; i++) {
+            if (!visitado[i]) {
+                executarBuscaEmProfundidade(i);
+            }
         }
-        if (destino == vertices[i]) {
-            tdestino = true;
+
+        cout << "Árvore de busca em profundidade:\n";
+        for (int i = 0; i < numvertices; ++i) {
+            if (pais[i] != -1) {
+                cout << "(" << vertices[pais[i]] << ", " << vertices[i] << ") - Distância: " << distancia[i] << "\n";
+            }
         }
+    } else {
+        cerr << "Grafo não é conexo, não é possível executar busca em profundidade." << endl;
     }
-    if (tdestino and torigem) {
-        filadinamica filavertices;
+}
+
+void Grafo::buscaemlargura(string origem, string destino) {
+    if (direcionado) {
+        filadinamica filaVertices;
         bool encontrado = false;
         limpamarcador();
-
-        int indiceOrigem = obterindice(origem);
+        filaVertices.inserir(origem);
+        do {
+            string verticeAtual = filaVertices.remover();
+            if (verticeAtual == destino) {
+                cout << "Visitando: " << verticeAtual << endl;
+                cout << "Caminho encontrado!\n";
+                encontrado = true;
+            } else {
+                int indice = obterindice(verticeAtual);
+                cout << "Visitando: " << verticeAtual << endl;
+                for (int i = 0; i < maxvertices; i++) {
+                    if (matrizadjacencias[indice][i] != arestanula) {
+                        if (!marcador[i]) {
+                            cout << "Enfileirando: " << vertices[i] << endl;
+                            filaVertices.inserir(vertices[i]);
+                            marcador[i] = true;
+                        }
+                    }
+                }
+                // No caso de grafos direcionados, verifique também as arestas de entrada
+                for (int i = 0; i < maxvertices; i++) {
+                    if (matrizadjacencias[i][indice] != arestanula) {
+                        if (!marcador[i]) {
+                            cout << "Enfileirando (aresta de entrada): " << vertices[i] << endl;
+                            filaVertices.inserir(vertices[i]);
+                            marcador[i] = true;
+                        }
+                    }
+                }
+            }
+        } while (!filaVertices.estavazio() && !encontrado);
+        if (!encontrado) {
+            cout << "Caminho não encontrado!\n";
+        }
+    } else {
+filadinamica filavertices;
+        bool encontrado = false;
+        limpamarcador();
         filavertices.inserir(origem);
-        marcador[indiceOrigem] = true;
-
-        auto start_time = high_resolution_clock::now();
-
-        while (!filavertices.estavazio() and !encontrado) {
-            string verticeatual = filavertices.primeiroFila();
-            filavertices.remover();
-            cout << "Visitando: " << verticeatual << endl;
-
-            if (verticeatual == destino) {
+        do{
+            string verticeatual = filavertices.remover();
+            if (verticeatual == destino){
+                cout << "Visitando: " << verticeatual << endl;
                 cout << "Caminho encontrado!\n";
                 encontrado = true;
-            } else {
+            } else{
                 int indice = obterindice(verticeatual);
-                for (int i = 0; i < maxvertices; i++) {
-                    if (matrizadjacencias[indice][i] != arestanula and !marcador[i]) {
-                        cout << "Enfileirando: " << vertices[i] << endl;
-                        filavertices.inserir(vertices[i]);
-                        marcador[i] = true;
-                    }
+                cout << "Visitando: " << verticeatual << endl;
+                for (int i=0 ; i<maxvertices ; i++){
+                    if (matrizadjacencias[indice][i] != arestanula){
+                        if (!marcador[i]){
+                            cout << "Enfileirando: " << vertices[i] << endl;
+                            filavertices.inserir(vertices[i]);
+                            marcador[i] = true;
+                        }
+                    }  
                 }
             }
-        }
-
-        auto end_time = high_resolution_clock::now();
-        auto duration = duration_cast<seconds>(end_time - start_time);
-
-        cout << "Tempo total de execução: " << duration.count() << " segundos" << endl;
-
-        if (!encontrado) {
-            cout << "Caminho não encontrado!\n";
-        }
-    } else {
-        cerr << "Erro: Um dos vértices não existe.\n";
-    }
+        } while (!filavertices.estavazio() && !encontrado);
+        if (!encontrado){
+            cout << "Caminho nao encontrado!\n";
+        }    }
 }
 
-void Grafo::buscaemprofundidade(string origem, string destino) 
-{
-    bool torigem = false;
-    bool tdestino = false;
-    for (int i = 0; i < numvertices; i++) {
-        if (origem == vertices[i]) {
-            torigem = true;
-        }
-        if (destino == vertices[i]) {
-            tdestino = true;
-        }
-    }
-    if (tdestino and torigem) {
-        pilhadinamica pilhavertices;
+void Grafo::buscaemprofundidade(string origem, string destino) {
+    if (direcionado) {
+        pilhadinamica pilhaVertices;
         bool encontrado = false;
         limpamarcador();
-
-        int indiceOrigem = obterindice(origem);
-        pilhavertices.inserir(origem);
-        marcador[indiceOrigem] = true;
-
-        auto start_time = high_resolution_clock::now();
-
-        while (!pilhavertices.estavazio() and !encontrado) {
-            string verticeatual = pilhavertices.topo();
-            pilhavertices.remover();
-            cout << "Visitando: " << verticeatual << endl;
-
-            if (verticeatual == destino) {
+        pilhaVertices.inserir(origem);
+        do {
+            string verticeAtual = pilhaVertices.remover();
+            if (verticeAtual == destino) {
+                cout << "Visitando: " << verticeAtual << endl;
                 cout << "Caminho encontrado!\n";
                 encontrado = true;
             } else {
-                int indice = obterindice(verticeatual);
+                int indice = obterindice(verticeAtual);
+                cout << "Visitando: " << verticeAtual << endl;
                 for (int i = 0; i < maxvertices; i++) {
-                    if (matrizadjacencias[indice][i] != arestanula and !marcador[i]) {
-                        cout << "Empilhando: " << vertices[i] << endl;
-                        pilhavertices.inserir(vertices[i]);
-                        marcador[i] = true;
+                    if (matrizadjacencias[indice][i] != arestanula) {
+                        if (!marcador[i]) {
+                            cout << "Empilhando: " << vertices[i] << endl;
+                            pilhaVertices.inserir(vertices[i]);
+                            marcador[i] = true;
+                        }
+                    }
+                }
+                // No caso de grafos direcionados, verifique também as arestas de entrada
+                for (int i = 0; i < maxvertices; i++) {
+                    if (matrizadjacencias[i][indice] != arestanula) {
+                        if (!marcador[i]) {
+                            cout << "Empilhando (aresta de entrada): " << vertices[i] << endl;
+                            pilhaVertices.inserir(vertices[i]);
+                            marcador[i] = true;
+                        }
                     }
                 }
             }
-        }
-
-        auto end_time = high_resolution_clock::now();
-        auto duration = duration_cast<seconds>(end_time - start_time);
-
-        cout << "Tempo total de execução: " << duration.count() << " segundos" << endl;
-
+        } while (!pilhaVertices.estavazio() && !encontrado);
         if (!encontrado) {
             cout << "Caminho não encontrado!\n";
         }
     } else {
-        cerr << "Erro: Um dos vértices não existe.\n";
-    }
+pilhadinamica pilhavertices;
+        bool encontrado = false;
+        limpamarcador();
+        pilhavertices.inserir(origem);
+        do{
+            string verticeatual = pilhavertices.remover();
+            if (verticeatual == destino){
+                cout << "Visitando: " << verticeatual << endl;
+                cout << "Caminho encontrado!\n";
+                encontrado = true;
+            } else{
+                int indice = obterindice(verticeatual);
+                cout << "Visitando: " << verticeatual << endl;
+                for (int i=0 ; i<maxvertices ; i++){
+                    if (matrizadjacencias[indice][i] != arestanula){
+                        if (!marcador[i]){
+                            cout << "Empilhando: " << vertices[i] << endl;
+                            pilhavertices.inserir(vertices[i]);
+                            marcador[i] = true;
+                        }
+                    }  
+                }
+            }
+        } while (!pilhavertices.estavazio() && !encontrado);
+        if (!encontrado){
+            cout << "Caminho nao encontrado!\n";
+        }    }
 }
-
 void Grafo::removeraresta(string origem, string destino)
 {
     if (direcionado){
-    int verticeorigem = stoi(origem) - 1;
-    int verticedestino = stoi(destino) - 1;
+    int verticeorigem = obterindice(origem);
+    int verticedestino = obterindice(destino);
     
     // Verifica se os vértices são válidos
     if (verticeorigem >= 0 and verticeorigem < numvertices and verticedestino >= 0 and verticedestino < numvertices) {
-        matrizadjacencias[verticeorigem][verticedestino] = 0;
+        matrizadjacencias[verticeorigem][verticedestino] = arestanula;
         // Se o grafo for não direcionado, descomente a linha abaixo
         // matrizadjacencias[verticedestino][verticeorigem] = 0;
     }
     reescreverArquivo();
     } else {
-    int verticeorigem = stoi(origem) - 1;
-    int verticedestino = stoi(destino) - 1;
+    int verticeorigem = obterindice(origem);
+    int verticedestino = obterindice(destino);
     
     // Verifica se os vértices são válidos
     if (verticeorigem >= 0 and verticeorigem < numvertices and verticedestino >= 0 and verticedestino < numvertices) {
-        matrizadjacencias[verticeorigem][verticedestino] = 0;
+        matrizadjacencias[verticeorigem][verticedestino] = arestanula;
         // Se o grafo for não direcionado, descomente a linha abaixo
-        matrizadjacencias[verticedestino][verticeorigem] = 0;
+        matrizadjacencias[verticedestino][verticeorigem] = arestanula;
     }
     }
 }
-
-
-bool Grafo::ehConexo() 
-{
+bool Grafo::ehConexo() {
     if (numvertices == 0) {
         return true; // Um grafo vazio pode ser considerado conexo
     }
@@ -556,37 +723,48 @@ bool Grafo::ehConexo()
     }
 
     // Fila para a BFS
-    filadinamica fila;
+    queue<int> fila;
 
     // Começa a BFS a partir do primeiro vértice
-    fila.inserir(to_string(0));
-    visitados[0] = true;
-    int visitadosCount = 1;
+    for (int inicio = 0; inicio < numvertices; inicio++) {
+        if (!visitados[inicio]) {
+            fila.push(inicio);
+            visitados[inicio] = true;
 
-    while (!fila.estavazio()) {
-        int verticeAtual = stoi(fila.primeiroFila());
-        fila.remover();
+            while (!fila.empty()) {
+                int verticeAtual = fila.front();
+                fila.pop();
 
-        for (int i = 0; i < numvertices; i++) {
-            if (matrizadjacencias[verticeAtual][i] != arestanula and !visitados[i]) {
-                fila.inserir(to_string(i));
-                visitados[i] = true;
-                visitadosCount++;
+                for (int i = 0; i < numvertices; i++) {
+                    if (matrizadjacencias[verticeAtual][i] != arestanula && !visitados[i]) {
+                        fila.push(i);
+                        visitados[i] = true;
+                    }
+                }
             }
+        }
+    }
+
+    // Verifica se todos os vértices foram visitados
+    bool conexo = true;
+    for (int i = 0; i < numvertices; i++) {
+        if (!visitados[i]) {
+            conexo = false;
+            break;
         }
     }
 
     delete[] visitados;
 
-    // Se todos os vértices foram visitados, o grafo é conexo
-    return visitadosCount == numvertices;
+    return conexo;
 }
+
 
 void Grafo::possuiciclos()
 {
   int contador = 0;
   for (int i = 0; i < numvertices; i++){
-      if (matrizadjacencias[i][i] == 1){
+      if (matrizadjacencias[i][i] != arestanula){
         contador ++;
       }
   }
@@ -614,39 +792,65 @@ void Grafo::eheuleriano()
     }
 }
 
-bool Grafo::ehfortementeconexo() 
-{
+bool Grafo::ehfortementeconexo() {
     // Inicializa um array para marcar os vértices visitados
     bool* visitado = new bool[numvertices];
     for (int i = 0; i < numvertices; ++i) {
         visitado[i] = false;
     }
-    
-    pilhadinamica pilha;
-    
-    
-    pilha.inserir(vertices[0]);
-    while (!pilha.estavazio()) {
-        string u_str = pilha.remover();
-        int u = stoi(u_str); 
-        
-        if (!visitado[u]) {
-            visitado[u] = true;
-            
-            // Percorre todos os vértices adjacentes ao vértice atual
-            for (int i = 0; i < numvertices; i++) {
-                // Se houver uma aresta entre os vértices e o vértice adjacente não foi visitado
-                if (matrizadjacencias[u][i] != arestanula and !visitado[i]) {
-                    // Insere o vértice adjacente na pilha para visita posterior
-                    pilha.inserir(to_string(i)); 
+
+    // Função auxiliar para realizar uma DFS a partir de um vértice
+    auto dfs = [&](int vertice) {
+        stack<int> pilha;
+        pilha.push(vertice);
+
+        while (!pilha.empty()) {
+            int u = pilha.top();
+            pilha.pop();
+
+            if (!visitado[u]) {
+                visitado[u] = true;
+
+                // Percorre todos os vértices adjacentes ao vértice atual
+                for (int i = 0; i < numvertices; i++) {
+                    // Se houver uma aresta entre os vértices e o vértice adjacente não foi visitado
+                    if (matrizadjacencias[u][i] != arestanula && !visitado[i]) {
+                        // Insere o vértice adjacente na pilha para visita posterior
+                        pilha.push(i);
+                    }
                 }
             }
         }
-    }
-    
+    };
+
+    // Realiza uma DFS a partir do primeiro vértice
+    dfs(0);
+
+    // Verifica se todos os vértices foram visitados na primeira DFS
     bool fortementeConexo = true;
     for (int i = 0; i < numvertices; ++i) {
-        // Se algum vértice não foi visitado, o grafo não é fortemente conexo
+        if (!visitado[i]) {
+            fortementeConexo = false;
+            break;
+        }
+    }
+
+    // Se o grafo não for fortemente conexo, não há necessidade de continuar
+    if (!fortementeConexo) {
+        delete[] visitado;
+        return false;
+    }
+
+    // Reutiliza o array de visitados para realizar outra DFS a partir de um vértice diferente
+    for (int i = 0; i < numvertices; ++i) {
+        visitado[i] = false;
+    }
+
+    // Realiza uma segunda DFS a partir de um vértice diferente
+    dfs(1);
+
+    // Verifica se todos os vértices foram visitados na segunda DFS
+    for (int i = 0; i < numvertices; ++i) {
         if (!visitado[i]) {
             fortementeConexo = false;
             break;
@@ -654,9 +858,10 @@ bool Grafo::ehfortementeconexo()
     }
 
     delete[] visitado;
-    
+
     return fortementeConexo;
 }
+
 
 /*Verifica existencia do vertice para inserir ele caso o 
 vertice não exista*/
@@ -677,8 +882,9 @@ void Grafo::verificaExistencia(string vertice)
 }
 
 
-void Grafo::verificaExistenciaAresta(string saida, string entrada)
+void Grafo::verificaExistenciaAresta(string saida, string entrada, string peso)
 {
+  if (valorado == false){
   bool testeSaida = false;
   bool testeEntrada = true;
   for (int i = 0; i < numvertices; i++){
@@ -694,56 +900,76 @@ void Grafo::verificaExistenciaAresta(string saida, string entrada)
   } else {
     cerr << "Um dos vertices de entrada ou saida, não existe" << endl;
   }
+  } else {
+   bool testeSaida = false;
+  bool testeEntrada = true;
+  for (int i = 0; i < numvertices; i++){
+    if (vertices[i] == saida){
+      testeSaida = true;
+    }
+    if (vertices[i] == entrada){
+      testeEntrada = true;
+    }
+  }
+  if (testeEntrada and testeSaida == true){
+    inserearestaValorado(saida, entrada, peso);
+  } else {
+    cerr << "Um dos vertices de entrada ou saida, não existe" << endl;
+  } 
+  }
 }
+void Grafo::prim() {
+    // Verifica se o grafo é conexo
+    if (ehConexo()) {
+        vector<int> pais(numvertices, -1);
+        vector<int> distancia(numvertices, INT_MAX); // Distância em termos de peso da aresta
+        vector<bool> naArvore(numvertices, false);
 
-void Grafo::prim() 
-{
-    if (ehConexo()){
-  
-    vector<int> pais(numvertices, -1);
-    vector<int> distancia(numvertices, INT_MAX); // Distância em número de arestas
-    vector<bool> naArvore(numvertices, false);
+        auto executarPrim = [&](int inicio) {
+            distancia[inicio] = 0;
+            pais[inicio] = -1;
 
-    auto executarPrim = [&](int inicio) {
-        distancia[inicio] = 0;
-        pais[inicio] = -1;
+            // Min-heap para armazenar vértices que estão sendo processados
+            priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> filaPrioridade;
 
-        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> filaPrioridade;
+            filaPrioridade.push(make_pair(distancia[inicio], inicio));
 
-        filaPrioridade.push(make_pair(distancia[inicio], inicio));
+            // Loop principal do algoritmo de Prim
+            while (!filaPrioridade.empty()) {
+                int u = filaPrioridade.top().second;
+                filaPrioridade.pop();
 
-        // Loop principal do algoritmo de Prim
-        while (!filaPrioridade.empty()) {
-            int u = filaPrioridade.top().second;
-            filaPrioridade.pop();
+                if (naArvore[u]) continue; // Se já está na árvore, pular
 
-            if (naArvore[u]) continue; // Se já está na árvore, pular
+                naArvore[u] = true;
 
-            naArvore[u] = true;
-
-            for (int v = 0; v < numvertices; ++v) {
-                if (matrizadjacencias[u][v] && !naArvore[v] && distancia[v] > distancia[u] + 1) {
-                    pais[v] = u;
-                    distancia[v] = distancia[u] + 1;
-                    filaPrioridade.push(make_pair(distancia[v], v)); 
+                for (int v = 0; v < numvertices; ++v) {
+                    int peso = matrizadjacencias[u][v];
+                    if (peso != arestanula && !naArvore[v] && peso < distancia[v]) {
+                        pais[v] = u;
+                        distancia[v] = peso;
+                        filaPrioridade.push(make_pair(distancia[v], v));
+                    }
                 }
             }
-        }
-    };
+        };
 
-    for (int i = 0; i < numvertices; i++) {
-        if (!naArvore[i]) {
-            executarPrim(i);
+        for (int i = 0; i < numvertices; i++) {
+            if (!naArvore[i]) {
+                executarPrim(i);
+            }
         }
-    }
 
-    cout << "Arestas da árvore mínima:\n";
-    for (int i = 0; i < numvertices; ++i) {
-        if (pais[i] != -1) {
-            cout << "(" << vertices[pais[i]] << ", " << vertices[i] << ") - Distância: " << distancia[i] - distancia[pais[i]] << "\n";
+        cout << "Arestas da árvore mínima:\n";
+        for (int i = 0; i < numvertices; ++i) {
+            if (pais[i] != -1) {
+                cout << "(" << vertices[pais[i]] << ", " << vertices[i] << ") - Peso: " << matrizadjacencias[pais[i]][i] << "\n";
+            }
         }
-    }
     } else {
-      cerr << "Grafo não é conexo, logo não é possivel executar prim." << endl;
+        cerr << "Grafo não é conexo, logo não é possível executar Prim." << endl;
     }
 }
+
+
+

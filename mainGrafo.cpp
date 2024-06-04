@@ -30,7 +30,9 @@ void exibirMenuDirecionado() {
     cout << "| 14. Verificar se é fortemente conexo             |" << endl;
     cout << "| 15. Verificar se grafo é euleriano               |" << endl;
     cout << "| 16. Algoritmo de prim                            |" << endl;
-    cout << "| 17. Sair                                         |" << endl;
+    cout << "| 17. Arvore busca em largura                      |" << endl;
+    cout << "| 18. Arvore busca em profundidade                 |" << endl;
+    cout << "| 19. Sair                                         |" << endl;
     cout << "\033[0m"; 
     cout << "\033[1m\033[33m";
     cout << "====================================================" << endl;
@@ -61,7 +63,9 @@ void exibirMenu() {
     cout << "| 13. Verificar quantidade de ciclos               |" << endl;
     cout << "| 14. Verificar se grafo é euleriano               |" << endl;
     cout << "| 15. Algoritmo de prim                            |" << endl;
-    cout << "| 16. Sair                                         |" << endl;
+    cout << "| 16. Arvore busca em largura                      |" << endl;
+    cout << "| 17. Arvore busca em profundidade                 |" << endl;
+    cout << "| 18. Sair                                         |" << endl;
     cout << "\033[0m"; 
     cout << "\033[1m\033[33m";
     cout << "====================================================" << endl;
@@ -82,12 +86,49 @@ void animacaoTransicao() {
     cout << "\033[0m";
     usleep(05000000); // 1 segundo
 }
+bool verifica(const string& line) {
+    size_t vertices_pos = line.find("V = {");
+    size_t arestas_pos = line.find("}; A = {");
 
+    if (vertices_pos == string::npos || arestas_pos == string::npos) {
+        cerr << "Erro de formatação: falta {} encerrando os vértices ou arestas." << endl
+             << "Por favor, garanta que o formato no arquivo está no seguinte padrão: V = {a,b,c,...}; A = {(a,b),(b,c),...}; ou V = {a,b,c,...}; A = {(a,b,1),(b,c,-2),...};" << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    size_t pos = arestas_pos + 6;
+    size_t end_pos = line.find("};", pos);
+    if (end_pos == string::npos) {
+        cerr << "Erro de formatação: falta '};' encerrando as arestas." << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    string arestas_str = line.substr(pos, end_pos - pos);
+
+    size_t open_paren_pos = arestas_str.find('(');
+    while (open_paren_pos != string::npos) {
+        size_t close_paren_pos = arestas_str.find(')', open_paren_pos);
+        if (close_paren_pos == string::npos) {
+            cerr << "Erro de formatação: falta ')' encerrando uma aresta." << endl;
+            exit(EXIT_FAILURE);
+        }
+
+        string aresta = arestas_str.substr(open_paren_pos + 1, close_paren_pos - open_paren_pos - 1);
+        if (count(aresta.begin(), aresta.end(), ',') == 2) {
+            return true;
+        }
+
+        open_paren_pos = arestas_str.find('(', close_paren_pos);
+    }
+
+    return false;
+}
 int main() {
     unsigned int numVertices = 25000; // Supondo um número máximo de vértices
     int opcao;
     string item1, item2;
-    Grafo grafo(numVertices);
+    int nulo = 0;
+    Grafo grafo(numVertices, nulo);
 
     
     char resposta;
@@ -96,8 +137,11 @@ int main() {
     if (resposta == 'y' || resposta == 'Y') {
         grafo.direcionado = true;
     }
+    
     grafo.lergrafo();
     grafo.reescreverArquivo();
+    
+    
     if (grafo.direcionado){
     do {
         limpaTela();
@@ -120,13 +164,26 @@ int main() {
             }
             case 2: {
                 animacaoTransicao();
-                string saida, entrada;
+                string saida, entrada, peso;
+                if (grafo.valorado == false){
+                  cout << "Digite o nome do vértice de saída: ";
+                  cin >> saida;
+                  cout << "Digite o nome do vértice de entrada: ";
+                  cin >> entrada;
+                  peso = 1;
+                  grafo.verificaExistenciaAresta(saida,entrada,peso);
+                  grafo.reescreverArquivo();
+                } else {
+                
                 cout << "Digite o nome do vértice de saída: ";
                 cin >> saida;
                 cout << "Digite o nome do vértice de entrada: ";
                 cin >> entrada;
-                grafo.verificaExistenciaAresta(saida,entrada);
+                cout << "Digite o peso dessa aresta: ";
+                cin >> peso;
+                grafo.verificaExistenciaAresta(saida,entrada, peso);
                 grafo.reescreverArquivo();
+                }
                 
                 cout << "Pressione qualquer tecla para voltar ao menu principal...";
                 cin.ignore();
@@ -270,7 +327,7 @@ int main() {
             }
             case 15: {
                 animacaoTransicao();
-                grafo.prim();
+                grafo.eheuleriano();
                 cout << "Pressione qualquer tecla para voltar ao menu principal...";
                 cin.ignore();
                 cin.get();
@@ -284,14 +341,30 @@ int main() {
                 cin.get();
                 break;
             }
-            case 17:
+            case 17: {
+                animacaoTransicao();
+                grafo.buscaemlarguraArvore();
+                cout << "Pressione qualquer tecla para voltar ao menu principal...";
+                cin.ignore();
+                cin.get();
+                break;
+            }
+            case 18: {
+                animacaoTransicao();
+                grafo.buscaemprofundidadeArvore();
+                cout << "Pressione qualquer tecla para voltar ao menu principal...";
+                cin.ignore();
+                cin.get();
+                break;
+            }
+            case 19:
                 cout << "Obrigado por usar o nosso sitema =)" << endl;
                 break;
             default:
                 cout << "Opção inválida!" << endl;
         }
         usleep(500000); // Aguarda 5.5 segundos para dar tempo de ler antes de limpar a tela
-    } while (opcao != 17);
+    } while (opcao != 19);
     
     grafo.reescreverArquivo();
     } else {
@@ -316,13 +389,26 @@ int main() {
             }
             case 2: {
                 animacaoTransicao();
-                string saida, entrada;
+                string saida, entrada, peso;
+                if (grafo.valorado == false){
+                  cout << "Digite o nome do vértice de saída: ";
+                  cin >> saida;
+                  cout << "Digite o nome do vértice de entrada: ";
+                  cin >> entrada;
+                  peso = 1;
+                  grafo.verificaExistenciaAresta(saida,entrada,peso);
+                  grafo.reescreverArquivo();
+                } else {
+                
                 cout << "Digite o nome do vértice de saída: ";
                 cin >> saida;
                 cout << "Digite o nome do vértice de entrada: ";
                 cin >> entrada;
-                grafo.verificaExistenciaAresta(saida,entrada);
+                cout << "Digite o peso dessa aresta: ";
+                cin >> peso;
+                grafo.verificaExistenciaAresta(saida,entrada, peso);
                 grafo.reescreverArquivo();
+                }
                 
                 cout << "Pressione qualquer tecla para voltar ao menu principal...";
                 cin.ignore();
@@ -467,20 +553,36 @@ int main() {
                 cin.get();
                 break;
             }
-            case 16:
+            case 16: {
+                animacaoTransicao();
+                grafo.buscaemlarguraArvore();
+                cout << "Pressione qualquer tecla para voltar ao menu principal...";
+                cin.ignore();
+                cin.get();
+                break;
+            }
+            case 17: {
+                animacaoTransicao();
+                grafo.buscaemprofundidadeArvore();
+                cout << "Pressione qualquer tecla para voltar ao menu principal...";
+                cin.ignore();
+                cin.get();
+                break;
+            }
+            case 18:
                 cout << "Obrigado por usar o nosso sitema =)" << endl;
                 break;
             default:
                 cout << "Opção inválida!" << endl;
         }
         usleep(500000); // Aguarda 5.5 segundos para dar tempo de ler antes de limpar a tela
-    } while (opcao != 16);
+    } while (opcao != 18);
     
     grafo.reescreverArquivo();
 
     }
 
-
+  
 
     return 0;
 }
