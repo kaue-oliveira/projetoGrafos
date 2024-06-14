@@ -5,7 +5,6 @@
 #include "filadinamica.h"
 #include "pilhadinamica.h"
 
-using namespace std;
 
 void exibirMenuDirecionado() {
     cout << "\033[2J\033[1;1H"; 
@@ -42,7 +41,9 @@ void exibirMenuDirecionado() {
     cout << "| 25. Exibir arestas ponte                         |" << endl; 
     cout << "| 26. Exibir se grafo é bipartido                  |" << endl; 
     cout << "| 27. Exibir se grafo é planar                     |" << endl; 
-    cout << "| 28. Sair                                         |" << endl;
+    cout << "| 28. Qual o fluxo maximo                          |" << endl; 
+    cout << "| 29. Verificar se grafo é ciclico                 |" << endl; 
+    cout << "| 30. Sair                                         |" << endl;
     cout << "\033[0m"; 
     cout << "\033[1m\033[33m";
     cout << "====================================================" << endl;
@@ -83,7 +84,9 @@ void exibirMenu() {
     cout << "| 23. Exibir arestas ponte                         |" << endl; 
     cout << "| 24. Exibir se grafo é bipartido                  |" << endl; 
     cout << "| 25. Exibir se grafo é planar                     |" << endl;     
-    cout << "| 26. Sair                                         |" << endl;
+    cout << "| 26. Qual o fluxo maximo                          |" << endl; 
+    cout << "| 27. Verificar se grafo é ciclico                 |" << endl; 
+    cout << "| 28. Sair                                         |" << endl;
     cout << "\033[0m"; 
     cout << "\033[1m\033[33m";
     cout << "====================================================" << endl;
@@ -108,22 +111,23 @@ void animacaoTransicao() {
 int main() {
     unsigned int numVertices = 10000000; // Supondo um número máximo de vértices
     int opcao;
+    int resultado;
     string item1, item2;
     int nulo = 0;
     Grafo grafo(numVertices, nulo);
     
 
-    char resposta;
+    string resposta;
     cout << "O grafo é direcionado? (y/n): ";
     cin >> resposta;
-    if (resposta == 'y' || resposta == 'Y') {
-        grafo.direcionado = true;
+    if (resposta == "y" || resposta == "Y") {
+        grafo.defineDirecionado(resposta);
     }
     
     grafo.lergrafo();
     grafo.reescreverArquivo();
     
-    if (grafo.direcionado) {
+    if (grafo.ehdirecionado()) {
         do {
             limpaTela();
             exibirMenuDirecionado();
@@ -146,7 +150,7 @@ int main() {
                 case 2: {
                     animacaoTransicao();
                     string saida, entrada, peso;
-                    if (grafo.valorado == false) {
+                    if (grafo.ehvalorado() == false) {
                         cout << "Digite o nome do vértice de saída: ";
                         cin >> saida;
                         cout << "Digite o nome do vértice de entrada: ";
@@ -415,14 +419,37 @@ int main() {
                     cin.get();
                     break;
                 }
-                case 28:
+                case 28: {
+                    animacaoTransicao();
+                    cout << "Digite vertice de saida: ";
+                    cin >> item1;
+                    cout << endl;
+                    cout << "Digite vertice objetivo: ";
+                    cin >> item2;
+                    cout << endl;
+                    resultado = grafo.fluxoMaximo(item1, item2);
+                    cout << "Fluxo maximo é " << resultado << endl;
+                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
+                    cin.ignore();
+                    cin.get();
+                    break;
+                }
+                case 29: {
+                    animacaoTransicao();
+                    grafo.ehCiclico();
+                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
+                    cin.ignore();
+                    cin.get();
+                    break;
+                }
+                case 30:
                     cout << "Obrigado por usar o nosso sitema =)" << endl;
                     break;
                 default:
                     cout << "Opção inválida!" << endl;
             }
             usleep(500000); // Aguarda 0.5 segundos para dar tempo de ler antes de limpar a tela
-        } while (opcao != 28);
+        } while (opcao != 30);
         
         grafo.reescreverArquivo();
     } else {
@@ -448,7 +475,7 @@ int main() {
                 case 2: {
                     animacaoTransicao();
                     string saida, entrada, peso;
-                    if (grafo.valorado == false) {
+                    if (grafo.ehvalorado() == false) {
                         cout << "Digite o nome do vértice de saída: ";
                         cin >> saida;
                         cout << "Digite o nome do vértice de entrada: ";
@@ -696,14 +723,37 @@ int main() {
                     cin.get();
                     break;
                 }
-                case 26:
+                case 26: {
+                    animacaoTransicao();
+                    cout << "Digite vertice de saida: ";
+                    cin >> item1;
+                    cout << endl;
+                    cout << "Digite vertice objetivo: ";
+                    cin >> item2;
+                    cout << endl;
+                    resultado = grafo.fluxoMaximo(item1, item2);
+                    cout << "Fluxo maximo é " << resultado << endl;
+                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
+                    cin.ignore();
+                    cin.get();
+                    break;
+                }
+                case 27: {
+                    animacaoTransicao();
+                    grafo.ehCiclico();
+                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
+                    cin.ignore();
+                    cin.get();
+                    break;
+                }
+                case 28:
                     cout << "Obrigado por usar o nosso sitema =)" << endl;
                     break;
                 default:
                     cout << "Opção inválida!" << endl;
             }
             usleep(500000); // Aguarda 0.5 segundos para dar tempo de ler antes de limpar a tela
-        } while (opcao != 26);
+        } while (opcao != 28);
         
         grafo.reescreverArquivo();
     }
