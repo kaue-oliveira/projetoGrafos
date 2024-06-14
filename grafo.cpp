@@ -732,7 +732,7 @@ void Grafo::buscaemprofundidade(string origem, string destino) {
         }
     } while (!pilhaVertices.estavazio() && !encontrado);
     if (!encontrado) {
-        cout << "Caminho não encontrado!" << endl;
+        cout << "Caminho não encontrado!" ;
     }
     auto end_time = high_resolution_clock::now();
     auto duration = duration_cast<seconds>(end_time - start_time);
