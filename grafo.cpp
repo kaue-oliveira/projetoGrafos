@@ -1,356 +1,357 @@
-
 #include "grafo.h"
 #include <fstream>
 #include <sstream>
 #include <queue>
-#include <stack>
 #include <climits>
 #include <vector>
 #include <chrono>
 #include <algorithm>
 #include "pilhadinamica.h"
 #include "filadinamica.h"
-
-using namespace std::chrono;
 using namespace std;
-
-// Inicialização da classe Grafo
+using namespace std::chrono;
+// Essencial ou formação da lista
 Grafo::Grafo(int max, int nulo) 
 {
-    cout << "Inicializando o grafo..." << endl;
-    numvertices = 0;
-    maxvertices = max;
-    arestanula = nulo;
-    valorado = false;
-    direcionado = false;
-    vertices = new string[maxvertices];
-    marcador = new bool[maxvertices];
-    listaAdjacencia = new Lista[maxvertices];
-    cout << "Grafo inicializado com " << maxvertices << " vértices possíveis e aresta nula " << arestanula << endl;
+  numvertices = 0;
+  maxvertices = max;
+  arestanula = nulo;
+  valorado = false;
+  direcionado = false;
+  vertices = new string[maxvertices];
+  marcador = new bool[maxvertices];
+  listaAdjacencia = new Lista[maxvertices];
 }
 
-Grafo::~Grafo() 
+Grafo::~Grafo() {
+  delete[] vertices;
+  delete[] marcador;
+  delete[] listaAdjacencia;
+}
+
+
+
+void Grafo::defineDirecionado(string resposta) 
 {
-    cout << "Destruindo o grafo..." << endl;
-    delete[] vertices;
-    delete[] marcador;
-    delete[] listaAdjacencia;
-    cout << "Grafo destruído." << endl;
-}
-
-void Grafo::defineDirecionado(string resposta) {
-    if (resposta == "y" || resposta == "Y") {
-        direcionado = true;
-        cout << "O grafo foi definido como direcionado." << endl;
-    } else {
-        direcionado = false;
-        cout << "O grafo foi definido como não direcionado." << endl;
-    }
+  if (resposta == "y" or resposta == "Y") {
+      direcionado = true;
+      cout << "O grafo foi definido como direcionado." << endl;
+  } else {
+      direcionado = false;
+      cout << "O grafo foi definido como não direcionado." << endl;
+  }
 }
 
 void Grafo::inserearesta(string Nosaida, string Noentrada) 
 {
-    int linha = obterindice(Nosaida);
-    int coluna = obterindice(Noentrada);
+  int linha = obterindice(Nosaida);
+  int coluna = obterindice(Noentrada);
 
-    if (linha != -1 and coluna != -1) {
-        listaAdjacencia[linha].inserir(coluna, 1);
-        cout << "Aresta inserida de " << Nosaida << " para " << Noentrada << endl;
-        if (!direcionado) {
-            listaAdjacencia[coluna].inserir(linha, 1);
-            cout << "Aresta inserida de " << Noentrada << " para " << Nosaida << " (não direcionado)." << endl;
-        }
-    } else {
-        cerr << "Erro ao inserir aresta: vértice não encontrado." << endl;
-    }
+  if (linha != -1 and coluna != -1) {
+      listaAdjacencia[linha].inserir(coluna, 1);
+      cout << "Aresta inserida de " << Nosaida << " para " << Noentrada << endl;
+      if (!direcionado) {
+          listaAdjacencia[coluna].inserir(linha, 1);
+          cout << "Aresta inserida de " << Noentrada << " para " << Nosaida << " (não direcionado)." << endl;
+      }
+  } else {
+      cerr << "Erro ao inserir aresta: vértice não encontrado." << endl;
+  }
 }
 
 void Grafo::inserearestaValorado(string Nosaida, string Noentrada, string peso) 
 {
-    int linha = obterindice(Nosaida);
-    int coluna = obterindice(Noentrada);
-    int pesoNovo = stoi(peso);
+  int linha = obterindice(Nosaida);
+  int coluna = obterindice(Noentrada);
+  int pesoNovo = stoi(peso);
 
-    if (linha != -1 and coluna != -1) {
-        listaAdjacencia[linha].inserir(coluna, pesoNovo);
-        cout << "Aresta valorada inserida de " << Nosaida << " para " << Noentrada << " com peso " << pesoNovo << endl;
-        if (!direcionado) {
-            listaAdjacencia[coluna].inserir(linha, pesoNovo);
-            cout << "Aresta valorada inserida de " << Noentrada << " para " << Nosaida << " com peso " << pesoNovo << " (não direcionado)" << endl;
-        }
-    } else {
-        cerr << "Erro ao inserir aresta valorada: vértice não encontrado." << endl;
-    }
+  if (linha != -1 and coluna != -1) {
+      listaAdjacencia[linha].inserir(coluna, pesoNovo);
+      cout << "Aresta valorada inserida de " << Nosaida << " para " << Noentrada << " com peso " << pesoNovo << endl;
+      if (!direcionado) {
+          listaAdjacencia[coluna].inserir(linha, pesoNovo);
+          cout << "Aresta valorada inserida de " << Noentrada << " para " << Nosaida << " com peso " << pesoNovo << " (não direcionado)" << endl;
+      }
+  } else {
+      cerr << "Erro ao inserir aresta valorada: vértice não encontrado." << endl;
+  }
 }
 
-void Grafo::inserevertice(string item) {
-    if (obterindice(item) != -1) {
-        cerr << "Erro: o vértice " << item << " já existe." << endl;
-        return;
-    }
-    vertices[numvertices] = item;
-    numvertices++;
-    cout << "Vértice " << item << " inserido com sucesso." << endl;
+void Grafo::inserevertice(string item) 
+{
+  if (obterindice(item) != -1) {
+      cerr << "Erro: o vértice " << item << " já existe." << endl;
+      return;
+  }
+  vertices[numvertices] = item;
+  numvertices++;
+  cout << "Vértice " << item << " inserido com sucesso." << endl;
 }
 
-void Grafo::removervertice(string verticeEditar) {
-    int indiceVertice = obterindice(verticeEditar);
-    if (indiceVertice == -1) {
-        cerr << "Erro: o vértice " << verticeEditar << " não existe." << endl;
-        return;
-    }
+void Grafo::removervertice(string verticeEditar) 
+{
+  int indiceVertice = obterindice(verticeEditar);
+  if (indiceVertice == -1) {
+      cerr << "Erro: o vértice " << verticeEditar << " não existe." << endl;
+      return;
+  }
 
-    listaAdjacencia[indiceVertice].limpar();
-    for (int i = 0; i < numvertices; i++) {
-        listaAdjacencia[i].remover(indiceVertice);
-    }
+  listaAdjacencia[indiceVertice].limpar();
+  for (int i = 0; i < numvertices; i++) {
+      listaAdjacencia[i].remover(indiceVertice);
+  }
 
-    for (int i = indiceVertice; i < numvertices - 1; i++) {
-        vertices[i] = vertices[i + 1];
-        listaAdjacencia[i] = listaAdjacencia[i + 1];
-    }
-    numvertices--;
-    cout << "Vértice " << verticeEditar << " removido com sucesso." << endl;
-    reescreverArquivo();
+  for (int i = indiceVertice; i < numvertices - 1; i++) {
+      vertices[i] = vertices[i + 1];
+      listaAdjacencia[i] = listaAdjacencia[i + 1];
+  }
+  numvertices--;
+  cout << "Vértice " << verticeEditar << " removido com sucesso." << endl;
+  reescreverArquivo();
 }
 
-void Grafo::removeraresta(string origem, string destino) {
-    int verticeorigem = obterindice(origem);
-    int verticedestino = obterindice(destino);
-    if (verticeorigem == -1 || verticedestino == -1) {
-        cerr << "Erro ao remover aresta: um dos vértices não existe." << endl;
-        return;
-    }
+void Grafo::removeraresta(string origem, string destino) 
+{
+  int verticeorigem = obterindice(origem);
+  int verticedestino = obterindice(destino);
+  if (verticeorigem == -1 or verticedestino == -1) {
+      cerr << "Erro ao remover aresta: um dos vértices não existe." << endl;
+      return;
+  }
 
-    listaAdjacencia[verticeorigem].remover(verticedestino);
-    cout << "Aresta de " << origem << " para " << destino << " removida." << endl;
+  listaAdjacencia[verticeorigem].remover(verticedestino);
+  cout << "Aresta de " << origem << " para " << destino << " removida." << endl;
 
-    if (!direcionado) {
-        listaAdjacencia[verticedestino].remover(verticeorigem);
-        cout << "Aresta de " << destino << " para " << origem << " removida (não direcionado)." << endl;
-    }
-    reescreverArquivo();
+  if (!direcionado) {
+      listaAdjacencia[verticedestino].remover(verticeorigem);
+      cout << "Aresta de " << destino << " para " << origem << " removida (não direcionado)." << endl;
+  }
+  reescreverArquivo();
 }
 
 // Manipulação de arquivos
 
-void Grafo::lergrafo() {
-    ifstream file(Nomearquivo);
-    if (!file.is_open()) {
-        cerr << "Erro: não foi possível abrir o arquivo " << Nomearquivo << endl;
-        exit(EXIT_FAILURE);
-    }
+void Grafo::lergrafo() 
+{
+  ifstream file(Nomearquivo);
+  if (!file.is_open()) {
+      cerr << "Erro: não foi possível abrir o arquivo " << Nomearquivo << endl;
+      exit(EXIT_FAILURE);
+  }
 
-    string line;
-    getline(file, line);
+  string line;
+  getline(file, line);
 
-    size_t vertices_pos = line.find("V = {");
-    size_t arestas_pos = line.find("}; A = {");
+  size_t vertices_pos = line.find("V = {");
+  size_t arestas_pos = line.find("}; A = {");
 
-    if (vertices_pos == string::npos || arestas_pos == string::npos) {
-        cerr << "Erro de formatação." << endl;
-        file.close();
-        exit(EXIT_FAILURE);
-    }
+  if (vertices_pos == string::npos or arestas_pos == string::npos) {
+      cerr << "Erro de formatação." << endl;
+      file.close();
+      exit(EXIT_FAILURE);
+  }
 
-    bool isValorado = verifica(line);
-    valorado = isValorado;
+  bool isValorado = verifica(line);
+  valorado = isValorado;
 
-    size_t pos = vertices_pos + 5;
-    size_t end_pos = line.find("}", pos);
-    string vertices_str = line.substr(pos, end_pos - pos);
+  size_t pos = vertices_pos + 5;
+  size_t end_pos = line.find("}", pos);
+  string vertices_str = line.substr(pos, end_pos - pos);
 
-    stringstream ss(vertices_str);
-    string vertex;
-    while (getline(ss, vertex, ',')) {
-        inserevertice(vertex);
-    }
+  stringstream ss(vertices_str);
+  string vertex;
+  while (getline(ss, vertex, ',')) {
+      inserevertice(vertex);
+  }
 
-    pos = arestas_pos + 6;
-    end_pos = line.find("};", pos);
-    string arestas_content = line.substr(pos, end_pos - pos);
+  pos = arestas_pos + 6;
+  end_pos = line.find("};", pos);
+  string arestas_content = line.substr(pos, end_pos - pos);
 
-    stringstream arestas_ss(arestas_content);
-    string aresta;
-    while (getline(arestas_ss, aresta, ')')) {
-        size_t open_pos = aresta.find('(');
-        if (open_pos != string::npos) {
-            string elementos = aresta.substr(open_pos + 1);
-            stringstream elementos_ss(elementos);
-            string no1, no2, valor;
+  stringstream arestas_ss(arestas_content);
+  string aresta;
+  while (getline(arestas_ss, aresta, ')')) {
+      size_t open_pos = aresta.find('(');
+      if (open_pos != string::npos) {
+          string elementos = aresta.substr(open_pos + 1);
+          stringstream elementos_ss(elementos);
+          string no1, no2, valor;
 
-            getline(elementos_ss, no1, ',');
-            getline(elementos_ss, no2, ',');
+          getline(elementos_ss, no1, ',');
+          getline(elementos_ss, no2, ',');
 
-            if (isValorado) {
-                getline(elementos_ss, valor, ',');
-                inserearestaValorado(no1, no2, valor);
-            } else {
-                inserearesta(no1, no2);
-            }
-        }
-    }
-    cout << "Grafo lido com sucesso do arquivo " << Nomearquivo << endl;
-    file.close();
+          if (isValorado) {
+              getline(elementos_ss, valor, ',');
+              inserearestaValorado(no1, no2, valor);
+          } else {
+              inserearesta(no1, no2);
+          }
+      }
+  }
+  cout << "Grafo lido com sucesso do arquivo " << Nomearquivo << endl;
+  file.close();
 }
 
 void Grafo::reescreverArquivo() 
 {
-    ofstream arquivo(Nomearquivo);
-    if (!arquivo.is_open()) {
-        cerr << "Erro: não foi possível abrir o arquivo " << Nomearquivo << endl;
-        return;
-    }
+  ofstream arquivo(Nomearquivo);
+  if (!arquivo.is_open()) {
+      cerr << "Erro: não foi possível abrir o arquivo " << Nomearquivo << endl;
+      return;
+  }
 
-    arquivo << "V = {";
-    for (int i = 0; i < numvertices; i++) {
-        arquivo << vertices[i];
-        if (i != numvertices - 1) {
-            arquivo << ",";
-        }
-    }
-    arquivo << "}";
+  arquivo << "V = {";
+  for (int i = 0; i < numvertices; i++) {
+      arquivo << vertices[i];
+      if (i != numvertices - 1) {
+          arquivo << ",";
+      }
+  }
+  arquivo << "}";
 
-    bool isValorado = valorado;
+  bool isValorado = valorado;
 
-    arquivo << "; A = {";
-    bool temArestas = false;
-    for (int i = 0; i < numvertices; i++) {
-        Lista::No* adj = listaAdjacencia[i].inicio();
-        while (adj != nullptr) {
-            int j = adj->vertice;
-            temArestas = true;
-            arquivo << "(" << vertices[i] << "," << vertices[j];
-            if (isValorado) {
-                arquivo << "," << adj->peso;
-            }
-            arquivo << "),";
-            adj = adj->proximo;
-        }
-    }
+  arquivo << "; A = {";
+  bool temArestas = false;
+  for (int i = 0; i < numvertices; i++) {
+      Lista::No* adj = listaAdjacencia[i].inicio();
+      while (adj != nullptr) {
+          int j = adj->vertice;
+          temArestas = true;
+          arquivo << "(" << vertices[i] << "," << vertices[j];
+          if (isValorado) {
+              arquivo << "," << adj->peso;
+          }
+          arquivo << "),";
+          adj = adj->proximo;
+      }
+  }
 
-    if (temArestas) {
-        arquivo.seekp(-1, ios_base::end);
-    }
-    arquivo << "};";
-    cout << "Arquivo " << Nomearquivo << " atualizado com sucesso." << endl;
-    arquivo.close();
+  if (temArestas) {
+      arquivo.seekp(-1, ios_base::end);
+  }
+  arquivo << "};";
+  cout << "Arquivo " << Nomearquivo << " atualizado com sucesso." << endl;
+  arquivo.close();
 }
 
 bool Grafo::verifica(const string& line) 
 {
-    size_t vertices_pos = line.find("V = {");
-    size_t arestas_pos = line.find("}; A = {");
+  size_t vertices_pos = line.find("V = {");
+  size_t arestas_pos = line.find("}; A = {");
 
-    if (vertices_pos == string::npos || arestas_pos == string::npos) {
-        cerr << "Erro de formatação: falta {} encerrando os vértices ou arestas." << endl
-             << "Por favor, garanta que o formato no arquivo está no seguinte padrão: V = {a,b,c,...}; A = {(a,b),(b,c),...}; ou V = {a,b,c,...}; A = {(a,b,1),(b,c,-2),...};" << endl;
-        exit(EXIT_FAILURE);
-    }
+  if (vertices_pos == string::npos or arestas_pos == string::npos) {
+      cerr << "Erro de formatação: falta {} encerrando os vértices ou arestas." << endl
+            << "Por favor, garanta que o formato no arquivo está no seguinte padrão: V = {a,b,c,...}; A = {(a,b),(b,c),...}; ou V = {a,b,c,...}; A = {(a,b,1),(b,c,-2),...};" << endl;
+      exit(EXIT_FAILURE);
+  }
 
-    size_t pos = arestas_pos + 6;
-    size_t end_pos = line.find("};", pos);
-    if (end_pos == string::npos) {
-        cerr << "Erro de formatação: falta '};' encerrando as arestas." << endl;
-        exit(EXIT_FAILURE);
-    }
+  size_t pos = arestas_pos + 6;
+  size_t end_pos = line.find("};", pos);
+  if (end_pos == string::npos) {
+      cerr << "Erro de formatação: falta '};' encerrando as arestas." << endl;
+      exit(EXIT_FAILURE);
+  }
 
-    string arestas_str = line.substr(pos, end_pos - pos);
+  string arestas_str = line.substr(pos, end_pos - pos);
 
-    size_t open_paren_pos = arestas_str.find('(');
-    while (open_paren_pos != string::npos) {
-        size_t close_paren_pos = arestas_str.find(')', open_paren_pos);
-        if (close_paren_pos == string::npos) {
-            cerr << "Erro de formatação: falta ')' encerrando uma aresta." << endl;
-            exit(EXIT_FAILURE);
-        }
+  size_t open_paren_pos = arestas_str.find('(');
+  while (open_paren_pos != string::npos) {
+      size_t close_paren_pos = arestas_str.find(')', open_paren_pos);
+      if (close_paren_pos == string::npos) {
+          cerr << "Erro de formatação: falta ')' encerrando uma aresta." << endl;
+          exit(EXIT_FAILURE);
+      }
 
-        string aresta = arestas_str.substr(open_paren_pos + 1, close_paren_pos - open_paren_pos - 1);
-        if (count(aresta.begin(), aresta.end(), ',') == 2) {
-            return true;
-        }
+      string aresta = arestas_str.substr(open_paren_pos + 1, close_paren_pos - open_paren_pos - 1);
+      if (count(aresta.begin(), aresta.end(), ',') == 2) {
+          return true;
+      }
 
-        open_paren_pos = arestas_str.find('(', close_paren_pos);
-    }
+      open_paren_pos = arestas_str.find('(', close_paren_pos);
+  }
 
-    return false;
+  return false;
 }
 
 // Funções úteis na manipulação do grafo
 
 int Grafo::obterindice(string item) 
 {
-    for (int i = 0; i < numvertices; i++) {
-        if (vertices[i] == item) {
-            return i;
-        }
-    }
-    return -1;
+  for (int i = 0; i < numvertices; i++) {
+      if (vertices[i] == item) {
+          return i;
+      }
+  }
+  return -1;
 }
 
 void Grafo::obtergrau(string item) 
 {
-    int linha = obterindice(item);
-    if (linha == -1) {
-        cerr << "O vértice " << item << " não existe no grafo." << endl;
-         
-    }
+  int linha = obterindice(item);
+  if (linha == -1) {
+      cerr << "O vértice " << item << " não existe no grafo." << endl;
+        
+  }
 
-    if (!direcionado) {
-        int grau = listaAdjacencia[linha].tamanho();
-        cout << "O vértice " << item << " tem grau " << grau << endl;
-    } else {
-        int saida = listaAdjacencia[linha].tamanho();
-        int entrada = 0;
-        for (int i = 0; i < numvertices; i++) {
-            entrada += listaAdjacencia[i].contar(linha);
-        }
-        cout << "O vértice " << item << " tem grau de saída " << saida << " e grau de entrada " << entrada << endl;
-    }
+  if (!direcionado) {
+      int grau = listaAdjacencia[linha].tamanho();
+      cout << "O vértice " << item << " tem grau " << grau << endl;
+  } else {
+      int saida = listaAdjacencia[linha].tamanho();
+      int entrada = 0;
+      for (int i = 0; i < numvertices; i++) {
+          entrada += listaAdjacencia[i].contar(linha);
+      }
+      cout << "O vértice " << item << " tem grau de saída " << saida << " e grau de entrada " << entrada << endl;
+  }
 }
 
 int Grafo::obtergrauaux(string item) 
 {
-    int linha = obterindice(item);
-    if (linha == -1) {
-        return 0;
-    }
-    return listaAdjacencia[linha].tamanho();
+  int linha = obterindice(item);
+  if (linha == -1) {
+      return 0;
+  }
+  return listaAdjacencia[linha].tamanho();
 }
+
 
 bool Grafo::ehConexo() 
 {
-    if (numvertices == 0) {
-        return true;
+  if (numvertices == 0) {
+      return true;
+  }
+
+  vector<bool> visitados(numvertices, false);
+  filadinamica fila;
+  fila.inserir(to_string(0));
+  visitados[0] = true;
+
+  while (!fila.estavazio()) {
+      int verticeAtual = stoi(fila.primeiroFila());
+      fila.remover();
+
+      Lista::No* adj = listaAdjacencia[verticeAtual].inicio();
+      while (adj != nullptr) {
+          int adjVertice = adj->vertice;
+          if (!visitados[adjVertice]) {
+              fila.inserir(to_string(adjVertice));
+              visitados[adjVertice] = true;
+          }
+          adj = adj->proximo;
+      }
+  }
+
+  for (int i = 0; i < visitados.size(); ++i) {
+    if (!visitados[i]) {
+        return false;
     }
+  }
 
-    vector<bool> visitados(numvertices, false);
-    queue<int> fila;
-    fila.push(0);
-    visitados[0] = true;
-
-    while (!fila.empty()) {
-        int verticeAtual = fila.front();
-        fila.pop();
-
-        Lista::No* adj = listaAdjacencia[verticeAtual].inicio();
-        while (adj != nullptr) {
-            int adjVertice = adj->vertice;
-            if (!visitados[adjVertice]) {
-                fila.push(adjVertice);
-                visitados[adjVertice] = true;
-            }
-            adj = adj->proximo;
-        }
-    }
-
-    for (bool visitado : visitados) {
-        if (!visitado) {
-            return false;
-        }
-    }
-    return true;
+  return true;
 }
+
 
 bool Grafo::ehdirecionado() 
 {
@@ -449,11 +450,6 @@ int Grafo::obtergrauSaida(string item)
 
 // Funções de exibição
 
-void Grafo::imprimirmatriz() 
-{
-    cout << "Função removida, pois a matriz de adjacências não é mais usada." << endl;
-}
-
 void Grafo::imprimirvertices() 
 {
     cout << "Lista de Vértices:" << endl;
@@ -511,44 +507,47 @@ bool Grafo::eheulerianoAux()
     return (grauImpar == 0 or grauImpar == 2);
 }
 
-bool Grafo::ehfortementeconexo() 
-{
+void Grafo::dfs(int inicio, vector<bool>& visitados) {
+    pilhadinamica pilha;
+    pilha.inserir(to_string(inicio));
+    visitados[inicio] = true;
+
+    while (!pilha.estavazio()) {
+        int u = stoi(pilha.topo());
+        pilha.remover();
+
+        Lista::No* adj = listaAdjacencia[u].inicio();
+        while (adj != nullptr) {
+            int v = adj->vertice;
+            if (!visitados[v]) {
+                pilha.inserir(to_string(v));
+                visitados[v] = true;
+            }
+            adj = adj->proximo;
+        }
+    }
+}
+
+bool Grafo::ehfortementeconexo() {
     if (numvertices == 0) {
         return true;
     }
 
     vector<bool> visitados(numvertices, false);
 
-    auto dfs = [&](int inicio) {
-        stack<int> pilha;
-        pilha.push(inicio);
-        visitados[inicio] = true;
-
-        while (!pilha.empty()) {
-            int u = pilha.top();
-            pilha.pop();
-
-            Lista::No* adj = listaAdjacencia[u].inicio();
-            while (adj != nullptr) {
-                int v = adj->vertice;
-                if (!visitados[v]) {
-                    pilha.push(v);
-                    visitados[v] = true;
-                }
-                adj = adj->proximo;
-            }
-        }
-    };
-
-    dfs(0);
+    // Primeira chamada da DFS
+    dfs(0, visitados);
     for (bool visitado : visitados) {
         if (!visitado) {
             return false;
         }
     }
 
+    // Resetando o vetor visitados
     fill(visitados.begin(), visitados.end(), false);
-    dfs(1);
+
+    // Segunda chamada da DFS
+    dfs(1, visitados);
     for (bool visitado : visitados) {
         if (!visitado) {
             return false;
@@ -557,7 +556,6 @@ bool Grafo::ehfortementeconexo()
 
     return true;
 }
-
 void Grafo::limpamarcador() 
 {
     fill(marcador, marcador + maxvertices, false);
@@ -566,109 +564,105 @@ void Grafo::limpamarcador()
 
 
 
-void Grafo::buscaemlarguraArvore() 
-{
+void Grafo::executarBuscaEmLargura(int inicio, vector<int>& pais, vector<int>& distancia, vector<bool>& visitado) {
+    filadinamica fila;
+    fila.inserir(to_string(inicio));
+    visitado[inicio] = true;
+    distancia[inicio] = 0;
+
+    while (!fila.estavazio()) {
+        int u = stoi(fila.primeiroFila());
+        fila.remover();
+
+        Lista::No* adj = listaAdjacencia[u].inicio();
+        while (adj != nullptr) {
+            int v = adj->vertice;
+            if (!visitado[v]) {
+                fila.inserir(to_string(v));
+                visitado[v] = true;
+                distancia[v] = distancia[u] + 1;
+                pais[v] = u;
+            }
+            adj = adj->proximo;
+        }
+    }
+}
+
+void Grafo::executarBuscaEmProfundidade(int inicio, vector<int>& pais, vector<int>& distancia, vector<bool>& visitado) {
+    pilhadinamica pilha;
+    pilha.inserir(to_string(inicio));
+    visitado[inicio] = true;
+    distancia[inicio] = 0;
+
+    while (!pilha.estavazio()) {
+        int u = stoi(pilha.topo());
+        pilha.remover();
+
+        Lista::No* adj = listaAdjacencia[u].inicio();
+        while (adj != nullptr) {
+            int v = adj->vertice;
+            if (!visitado[v]) {
+                pilha.inserir(to_string(v));
+                visitado[v] = true;
+                distancia[v] = distancia[u] + 1;
+                pais[v] = u;
+            }
+            adj = adj->proximo;
+        }
+    }
+}
+
+void Grafo::buscaemlarguraArvore() {
     auto start_time = high_resolution_clock::now();
     vector<int> pais(numvertices, -1);
     vector<int> distancia(numvertices, INT_MAX);
     vector<bool> visitado(numvertices, false);
 
-    auto executarBuscaEmLargura = [&](int inicio) {
-        queue<int> fila;
-        fila.push(inicio);
-        visitado[inicio] = true;
-        distancia[inicio] = 0;
-
-        while (!fila.empty()) {
-            int u = fila.front();
-            fila.pop();
-
-            Lista::No* adj = listaAdjacencia[u].inicio();
-            while (adj != nullptr) {
-                int v = adj->vertice;
-                if (!visitado[v]) {
-                    fila.push(v);
-                    visitado[v] = true;
-                    distancia[v] = distancia[u] + 1;
-                    pais[v] = u;
-                }
-                adj = adj->proximo;
-            }
-        }
-    };
-
     for (int i = 0; i < numvertices; i++) {
         if (!visitado[i]) {
-            executarBuscaEmLargura(i);
+            executarBuscaEmLargura(i, pais, distancia, visitado);
         }
     }
 
     cout << "Árvore de busca em largura:" << endl;
     for (int i = 0; i < numvertices; ++i) {
-    if (pais[i] != -1 || (pais[i] == -1 and listaAdjacencia[i].tamanho() > 0)) {
-        cout << "(" << (pais[i] != -1 ? vertices[pais[i]] : vertices[i]) << ", " << vertices[i] << ") - Distância: " << distancia[i] << "\n";
-    } else {
-        cout << "(" << vertices[i] << ") - Isolado" << endl;
+        if (pais[i] != -1 or (pais[i] == -1 && listaAdjacencia[i].tamanho() > 0)) {
+            cout << "(" << (pais[i] != -1 ? vertices[pais[i]] : vertices[i]) << ", " << vertices[i] << ") - Distância: " << distancia[i] << "\n";
+        } else {
+            cout << "(" << vertices[i] << ") - Isolado" << endl;
+        }
     }
-}
-
 
     auto end_time = high_resolution_clock::now();
     auto duration = duration_cast<seconds>(end_time - start_time);
     cout << "Tempo total de execução: " << duration.count() << " segundos" << endl;
 }
 
-void Grafo::buscaemprofundidadeArvore() 
-{
+void Grafo::buscaemprofundidadeArvore() {
     auto start_time = high_resolution_clock::now();
     vector<int> pais(numvertices, -1);
     vector<int> distancia(numvertices, INT_MAX);
     vector<bool> visitado(numvertices, false);
 
-    auto executarBuscaEmProfundidade = [&](int inicio) {
-        stack<int> pilha;
-        pilha.push(inicio);
-        visitado[inicio] = true;
-        distancia[inicio] = 0;
-
-        while (!pilha.empty()) {
-            int u = pilha.top();
-            pilha.pop();
-
-            Lista::No* adj = listaAdjacencia[u].inicio();
-            while (adj != nullptr) {
-                int v = adj->vertice;
-                if (!visitado[v]) {
-                    pilha.push(v);
-                    visitado[v] = true;
-                    distancia[v] = distancia[u] + 1;
-                    pais[v] = u;
-                }
-                adj = adj->proximo;
-            }
-        }
-    };
-
     for (int i = 0; i < numvertices; i++) {
         if (!visitado[i]) {
-            executarBuscaEmProfundidade(i);
+            executarBuscaEmProfundidade(i, pais, distancia, visitado);
         }
     }
 
     cout << "Árvore de busca em profundidade:" << endl;
     for (int i = 0; i < numvertices; ++i) {
-    if (pais[i] != -1 || (pais[i] == -1 && listaAdjacencia[i].tamanho() > 0)) {
-        cout << "(" << (pais[i] != -1 ? vertices[pais[i]] : vertices[i]) << ", " << vertices[i] << ") - Distância: " << distancia[i] << "\n";
-    } else {
-        cout << "(" << vertices[i] << ") - Isolado\n";
+        if (pais[i] != -1 or (pais[i] == -1 && listaAdjacencia[i].tamanho() > 0)) {
+            cout << "(" << (pais[i] != -1 ? vertices[pais[i]] : vertices[i]) << ", " << vertices[i] << ") - Distância: " << distancia[i] << "\n";
+        } else {
+            cout << "(" << vertices[i] << ") - Isolado\n";
+        }
     }
-}
 
     auto end_time = high_resolution_clock::now();
     auto duration = duration_cast<seconds>(end_time - start_time);
     cout << "Tempo total de execução: " << duration.count() << " segundos" << endl;
 }
-
 void Grafo::buscaemlargura(string origem, string destino) {
     auto start_time = high_resolution_clock::now();
     filadinamica filaVertices;
@@ -729,7 +723,7 @@ void Grafo::buscaemprofundidade(string origem, string destino) {
                 }
                 adj = adj->proximo;
             }
-        }
+        } 
     } while (!pilhaVertices.estavazio() && !encontrado);
     if (!encontrado) {
         cout << "Caminho não encontrado!" ;
@@ -738,61 +732,61 @@ void Grafo::buscaemprofundidade(string origem, string destino) {
     auto duration = duration_cast<seconds>(end_time - start_time);
     cout << "Tempo total de execução: " << duration.count() << " segundos" << endl;
 }
+
 void Grafo::prim() {
-    if (ehConexo()) {
-        auto start_time = high_resolution_clock::now();
-        vector<int> pais(numvertices, -1);
-        vector<int> distancia(numvertices, INT_MAX);
-        vector<bool> naArvore(numvertices, false);
+  if (ehConexo()){
+    auto start_time = high_resolution_clock::now();
+    vector<int> pais(numvertices, -1);
+    vector<int> distancia(numvertices, INT_MAX);
+    vector<bool> naArvore(numvertices, false);
 
-        auto executarPrim = [&](int inicio) {
-            distancia[inicio] = 0;
-            priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> filaPrioridade;
-            filaPrioridade.push(make_pair(distancia[inicio], inicio));
+    auto executarPrim = [&](int inicio) {
+        distancia[inicio] = 0;
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> filaPrioridade;
+        filaPrioridade.push(make_pair(distancia[inicio], inicio));
 
-            while (!filaPrioridade.empty()) {
-                int u = filaPrioridade.top().second;
-                filaPrioridade.pop();
+        while (!filaPrioridade.empty()) {
+            int u = filaPrioridade.top().second;
+            filaPrioridade.pop();
 
-                if (naArvore[u]) continue;
-                naArvore[u] = true;
+            if (naArvore[u]) continue;
+            naArvore[u] = true;
 
-                Lista::No* adj = listaAdjacencia[u].inicio();
-                while (adj != nullptr) {
-                    int v = adj->vertice;
-                    int peso = adj->peso;
-                    if (!naArvore[v] && peso < distancia[v]) {
-                        pais[v] = u;
-                        distancia[v] = peso;
-                        filaPrioridade.push(make_pair(distancia[v], v));
-                        cout << "Atualizando distância do vértice: " << vertices[v] << " para " << distancia[v] << endl;
-                    }
-                    adj = adj->proximo;
+            Lista::No* adj = listaAdjacencia[u].inicio();
+            while (adj != nullptr) {
+                int v = adj->vertice;
+                int peso = adj->peso;
+                if (!naArvore[v] && peso < distancia[v]) {
+                    pais[v] = u;
+                    distancia[v] = peso;
+                    filaPrioridade.push(make_pair(distancia[v], v));
                 }
-            }
-        };
-
-        for (int i = 0; i < numvertices; i++) {
-            if (!naArvore[i]) {
-                cout << "Iniciando algoritmo de Prim a partir do vértice: " << vertices[i] << endl;
-                executarPrim(i);
+                adj = adj->proximo;
             }
         }
+    };
 
-        cout << "Arestas da árvore mínima:\n";
-        for (int i = 0; i < numvertices; ++i) {
-            if (pais[i] != -1) {
-                cout << "(" << vertices[pais[i]] << ", " << vertices[i] << ") - Peso: " << distancia[i] << "\n";
-            }
+    for (int i = 0; i < numvertices; i++) {
+        if (!naArvore[i]) {
+            executarPrim(i);
         }
-
-        auto end_time = high_resolution_clock::now();
-        auto duration = duration_cast<seconds>(end_time - start_time);
-        cout << "Tempo total de execução: " << duration.count() << " segundos" << endl;
-    } else {
-        cerr << "Grafo não é conexo, logo não é possível executar Prim. " << endl;
     }
+
+    cout << "Arestas da árvore mínima:\n";
+    for (int i = 0; i < numvertices; ++i) {
+        if (pais[i] != -1) {
+            cout << "(" << vertices[pais[i]] << ", " << vertices[i] << ") - Peso: " << distancia[i] << "\n";
+        }
+    }
+
+    auto end_time = high_resolution_clock::now();
+    auto duration = duration_cast<seconds>(end_time - start_time);
+    cout << "Tempo total de execução: " << duration.count() << " segundos" << endl;
+  } else {
+    cerr << "Grafo não é conexo, logo não é possivel executar prim. " << endl;
+  }
 }
+
 
 
 void Grafo::tarjanArticulacao(int u, vector<int>& disc, vector<int>& low, vector<int>& pai, vector<bool>& articulacao, int& tempo) {
@@ -876,24 +870,24 @@ void Grafo::exibirOrdemTopologica() {
         }
     }
 
-    queue<int> fila;
+    filadinamica fila;
     for (int i = 0; i < numvertices; i++) {
         if (grauEntrada[i] == 0) {
-            fila.push(i);
+            fila.inserir(to_string(i));
         }
     }
 
     vector<int> ordem;
-    while (!fila.empty()) {
-        int u = fila.front();
-        fila.pop();
+    while (!fila.estavazio()) {
+        int u = stoi(fila.primeiroFila());
+        fila.remover();
         ordem.push_back(u);
 
         Lista::No* adj = listaAdjacencia[u].inicio();
         while (adj != nullptr) {
             grauEntrada[adj->vertice]--;
             if (grauEntrada[adj->vertice] == 0) {
-                fila.push(adj->vertice);
+                fila.inserir(to_string(adj->vertice));
             }
             adj = adj->proximo;
         }
@@ -912,12 +906,11 @@ void Grafo::exibirOrdemTopologica() {
     }
     cout << endl;
 }
-
 void Grafo::exibirCaminhoMinimoDijkstra(string origem, string destino) {
     int origemIdx = obterindice(origem);
     int destinoIdx = obterindice(destino);
 
-    if (origemIdx == -1 || destinoIdx == -1) {
+    if (origemIdx == -1 or destinoIdx == -1) {
         cerr << "Um dos vértices não existe." << endl;
         return;
     }
@@ -933,10 +926,13 @@ void Grafo::exibirCaminhoMinimoDijkstra(string origem, string destino) {
     while (!filaPrioridade.empty()) {
         int u = filaPrioridade.top().second;
         filaPrioridade.pop();
-
-        if (visitado[u]) continue;
+        
+        if (visitado[u]) {
+            continue;
+        }
+        
         visitado[u] = true;
-
+        
         Lista::No* adj = listaAdjacencia[u].inicio();
         while (adj != nullptr) {
             int v = adj->vertice;
@@ -976,9 +972,9 @@ int Grafo::fluxoMaximo(string origem, string destino) {
     int origemIdx = obterindice(origem);
     int destinoIdx = obterindice(destino);
 
-    if (origemIdx == -1 || destinoIdx == -1) {
+    if (origemIdx == -1 or destinoIdx == -1) {
         cerr << "Um dos vértices não existe." << endl;
-        return 0;
+        return -1;
     }
 
     vector<vector<int>> capacidade(numvertices, vector<int>(numvertices, 0));
@@ -994,12 +990,12 @@ int Grafo::fluxoMaximo(string origem, string destino) {
     vector<int> pai(numvertices);
     auto bfs = [&](int s, int t) {
         fill(pai.begin(), pai.end(), -1);
-        queue<pair<int, int>> q;
-        q.push({s, INT_MAX});
-        while (!q.empty()) {
-            int u = q.front().first;
-            int fluxo = q.front().second;
-            q.pop();
+        queue<pair<int, int>> tupla;
+        tupla.push({s, INT_MAX});
+        while (!tupla.empty()) {
+            int u = tupla.front().first;
+            int fluxo = tupla.front().second;
+            tupla.pop();
 
             for (int v = 0; v < numvertices; v++) {
                 if (pai[v] == -1 && capacidade[u][v]) {
@@ -1008,7 +1004,7 @@ int Grafo::fluxoMaximo(string origem, string destino) {
                     if (v == t) {
                         return novoFluxo;
                     }
-                    q.push({v, novoFluxo});
+                    tupla.push({v, novoFluxo});
                 }
             }
         }
@@ -1030,40 +1026,40 @@ int Grafo::fluxoMaximo(string origem, string destino) {
     return fluxoMaximo;
 }
 
-Grafo Grafo::fechamentoTransitivo() {
-    Grafo fechamento(numvertices, /*aresta nula*/ {});
-    for (int i = 0; i < numvertices; i++) {
-        fechamento.inserevertice(vertices[i]);
-    }
+// Função para calcular e exibir o fechamento transitivo usando cout
+void Grafo::gerarFechamentoTransitivo() {
+    // Vetor para armazenar o grau de alcançabilidade de cada vértice
+    vector<vector<bool>> alcancavel(numvertices, vector<bool>(numvertices, false));
 
+    // Para cada vértice, realiza uma busca em largura para determinar a alcançabilidade
     for (int i = 0; i < numvertices; i++) {
-        vector<bool> alcancavel(numvertices, false);
         queue<int> fila;
         fila.push(i);
-        alcancavel[i] = true;
+        alcancavel[i][i] = true;
 
         while (!fila.empty()) {
             int u = fila.front();
             fila.pop();
-            Lista::No* adj = listaAdjacencia[u].inicio();
-            while (adj != nullptr) {
-                int v = adj->vertice;
-                if (!alcancavel[v]) {
-                    alcancavel[v] = true;
+            // Iteração sobre a lista de adjacência de u usando um iterador
+            for (auto it = listaAdjacencia[u].inicio(); it != listaAdjacencia[u].fim(); ++it) {
+                int v = it->vertice;
+                if (!alcancavel[i][v]) {
+                    alcancavel[i][v] = true;
                     fila.push(v);
                 }
-                adj = adj->proximo;
-            }
-        }
-
-        for (int j = 0; j < numvertices; j++) {
-            if (alcancavel[j]) {
-                fechamento.inserearesta(vertices[i], vertices[j]);
             }
         }
     }
 
-    return fechamento;
+    // Exibindo as arestas do grafo de fechamento transitivo
+    cout << "Arestas do fechamento transitivo:\n";
+    for (int i = 0; i < numvertices; i++) {
+        for (int j = 0; j < numvertices; j++) {
+            if (alcancavel[i][j]) {
+                cout << vertices[i] << " -> " << vertices[j] << endl;
+            }
+        }
+    }
 }
 
 void dfsComponentes(int v, vector<bool>& visitado, vector<string>& componente, Lista* listaAdjacencia, string* vertices) {
@@ -1108,16 +1104,16 @@ void Grafo::exibirCaminhoEuleriano() {
         cout << "Começando a busca pelo caminho euleriano..." << endl;
         cout << "OBS: Se o grafo for grande isso pode levar um tempo =(" << endl;
 
-        stack<string> caminho;
-        stack<string> caminhoAux;
+        pilhadinamica caminho;
+        pilhadinamica caminhoAux;
         vector<vector<bool>> visitado(numvertices, vector<bool>(numvertices, false));
         string verticeAtual = vertices[0];
         int indiceAtual = obterindice(verticeAtual);
 
-        caminho.push(verticeAtual);
+        caminho.inserir(verticeAtual);
 
-        while (!caminho.empty()) {
-            verticeAtual = caminho.top();
+        while (!caminho.estavazio()) {
+            verticeAtual = caminho.topo();
             indiceAtual = obterindice(verticeAtual);
             bool encontrouAresta = false;
 
@@ -1125,23 +1121,23 @@ void Grafo::exibirCaminhoEuleriano() {
                 if (listaAdjacencia[indiceAtual].contar(i) > 0 && !visitado[indiceAtual][i]) {
                     visitado[indiceAtual][i] = true;
                     visitado[i][indiceAtual] = true;
-                    caminho.push(vertices[i]);
+                    caminho.inserir(vertices[i]);
                     encontrouAresta = true;
                     break;
                 }
             }
 
             if (!encontrouAresta) {
-                caminhoAux.push(caminho.top());
-                caminho.pop();
+                caminhoAux.inserir(caminho.topo());
+                caminho.remover();
             }
         }
 
         cout << "Caminho Euleriano: ";
-        while (!caminhoAux.empty()) {
-            cout << caminhoAux.top();
-            caminhoAux.pop();
-            if (!caminhoAux.empty()) {
+        while (!caminhoAux.estavazio()) {
+            cout << caminhoAux.topo();
+            caminhoAux.remover();
+            if (!caminhoAux.estavazio()) {
                 cout << " -> ";
             }
         }
@@ -1171,7 +1167,6 @@ void Grafo::tarjanPontesUtil(int u, vector<int>& disc, vector<int>& low, vector<
         adj = adj->proximo;
     }
 }
-
 void Grafo::exibirArestasPonte() {
     vector<int> disc(numvertices, -1);
     vector<int> low(numvertices, -1);
@@ -1187,7 +1182,7 @@ void Grafo::exibirArestasPonte() {
     }
 
     cout << "Arestas Ponte:" << endl;
-    for (auto& ponte : listaPontes) {
+    for (const pair<int, int>& ponte : listaPontes) {
         cout << vertices[ponte.first] << " - " << vertices[ponte.second] << endl;
     }
 }
@@ -1198,20 +1193,20 @@ void Grafo::ehBipartido() {
 
     for (int i = 0; i < numvertices; i++) {
         if (cor[i] == -1) {
-            queue<int> fila;
-            fila.push(i);
+            filadinamica fila;
+            fila.inserir(to_string(i));
             cor[i] = 0;
 
-            while (!fila.empty()) {
-                int u = fila.front();
-                fila.pop();
+            while (!fila.estavazio()) {
+                int u = stoi(fila.primeiroFila());
+                fila.remover();
 
                 Lista::No* adj = listaAdjacencia[u].inicio();
                 while (adj != nullptr) {
                     int v = adj->vertice;
                     if (cor[v] == -1) {
                         cor[v] = 1 - cor[u];
-                        fila.push(v);
+                        fila.inserir(to_string(v));
                     } else if (cor[v] == cor[u]) {
                         testeBipartido = false;
                     }
@@ -1325,3 +1320,12 @@ void Grafo::ehPlanar() {
     }
 }
 
+void Grafo::listarArestas() {
+    std::cout << "Arestas do grafo:" << std::endl;
+    for (int i = 0; i < numvertices; i++) {
+        for (int j = 0; j < listaAdjacencia[i].tamanho(); j++) {
+            std::string destino = listaAdjacencia[i].obter(j);
+            std::cout << vertices[i] << " -> " << destino << std::endl;
+        }
+    }
+}

@@ -2,10 +2,9 @@
 #define NO_H 
 
 #include <iostream>
-
 using namespace std;
 
-typedef string TipoItem;
+typedef string TipoItem; //mudar para TipoItem para facilitar caso mude
 
 
 struct No

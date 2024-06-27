@@ -2,7 +2,7 @@
 
 #ifndef FILADINAMICA_H 
 #define FILADINAMICA_H 
-
+#include <string>
 #include "noh.h"
 
 class filadinamica{ 

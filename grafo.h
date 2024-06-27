@@ -5,9 +5,7 @@
 #include <iostream>
 #include "lista.h"
 #include <vector>
-#include <string>
 const std::string Nomearquivo = "grafo.txt";
-using namespace std;
 class Grafo {
 private:
     int numvertices;
@@ -60,6 +58,8 @@ public:
     void ehPlanar();    
     void buscaemlarguraArvore();
     void buscaemprofundidadeArvore();
+    void executarBuscaEmLargura(int inicio, vector<int>& pais, vector<int>& distancia, vector<bool>& visitado);
+    void executarBuscaEmProfundidade(int inicio, vector<int>& pais, vector<int>& distancia, vector<bool>& visitado);
     void buscaemlargura(std::string origem, std::string destino);
     void buscaemprofundidade(std::string origem, std::string destino);
     void prim();    
@@ -77,13 +77,15 @@ public:
     std::vector<bool>& pontes, int& tempo, std::vector<std::pair<int, int>>& listaPontes);    
     void ehBipartido();
     
-    
     // implementar ou arrumar ou apagar
     // void listarArestas();
     int fluxoMaximo(std::string origem, std::string destino);
-    Grafo fechamentoTransitivo();
-    void imprimirmatriz();
+    int bfs(int s, int t, std::vector<int>& pai);
+    void dfs(int inicio, vector<bool>& visitados);
 
+    void gerarFechamentoTransitivo();
+    void listarArestas();
+    
 };
 
 #endif // GRAFO_H

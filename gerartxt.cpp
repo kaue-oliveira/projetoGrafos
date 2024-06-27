@@ -12,9 +12,9 @@ int main() {
 
     // Escreve os vértices
     arq << "V = {";
-    for(int i = 0; i < 5000; i++) {
+    for(int i = 0; i < 10000; i++) {
         arq << i;
-        if (i < 4999) {
+        if (i < 9999) {
             arq << ",";
         }
     }
@@ -22,11 +22,11 @@ int main() {
 
     // Escreve as arestas
     arq << " A = {";
-    for (int i = 0; i < 4999; i++) {
+    for (int i = 0; i < 9999; i++) {
         arq << "(" << i << "," << i+1 << "," << rand() % 21 - 10 << "),"; // Aresta para o próximo vértice
     }
     // Conecta o último vértice ao primeiro
-    arq << "(" << 4999 << "," << 0 << "," << rand() % 21 - 10 << ")"; // Última aresta fechando o ciclo
+    arq << "(" << 9999 << "," << 0 << "," << rand() % 21 - 10 << ")"; // Última aresta fechando o ciclo
     arq << "};";
 
     arq.close();

@@ -1,762 +1,318 @@
 #include <iostream>
 #include <fstream>
 #include <unistd.h> // Para o usleep
+#include <SFML/Graphics.hpp>
 #include "grafo.h"
 #include "filadinamica.h"
 #include "pilhadinamica.h"
 
+using namespace std;
 
-void exibirMenuDirecionado() {
-    cout << "\033[2J\033[1;1H"; 
-    cout << "\033[1m\033[33m"; 
-    cout << "====================================================" << endl;
-    cout << "|                     M E N U                      |" << endl;
-    cout << "====================================================" << endl;
-    cout << "\033[0m";
-    cout << "\033[1m\033[34m";
-    cout << "| 1. Inserir vértice                               |" << endl;
-    cout << "| 2. Inserir aresta                                |" << endl;
-    cout << "| 3. Obter grau de um vértice                      |" << endl;
-    cout << "| 4. Imprimir matriz de adjacências                |" << endl;
-    cout << "| 5. Imprimir lista de vértices                    |" << endl;
-    cout << "| 6. Remover vértice                               |" << endl;
-    cout << "| 7. Numero de vertices                            |" << endl;
-    cout << "| 8. Numero de arestas                             |" << endl;
-    cout << "| 9. Busca em largura                              |" << endl;
-    cout << "| 10. Busca em profundidade                        |" << endl;
-    cout << "| 11. Remover aresta                               |" << endl;
-    cout << "| 12. Verificar se é conexo                        |" << endl;
-    cout << "| 13. Verificar quantidade de ciclos               |" << endl;
-    cout << "| 14. Verificar se é fortemente conexo             |" << endl;
-    cout << "| 15. Verificar se grafo é euleriano               |" << endl;
-    cout << "| 16. Algoritmo de prim                            |" << endl;
-    cout << "| 17. Arvore busca em largura                      |" << endl;
-    cout << "| 18. Arvore busca em profundidade                 |" << endl;
-    cout << "| 19. Listar caminho hamiltoniano                  |" << endl;
-    cout << "| 20. Encontrar Verices de articulação(Tarjan)     |" << endl;
-    cout << "| 21. Exibir caminho euleriano                     |" << endl;
-    cout << "| 22. Exibir caminho minimo (dijkstra)             |" << endl;
-    cout << "| 23. Exibir ordem topologica                      |" << endl; 
-    cout << "| 24. Exibir componentes conexas                   |" << endl; 
-    cout << "| 25. Exibir arestas ponte                         |" << endl; 
-    cout << "| 26. Exibir se grafo é bipartido                  |" << endl; 
-    cout << "| 27. Exibir se grafo é planar                     |" << endl; 
-    cout << "| 28. Qual o fluxo maximo                          |" << endl; 
-    cout << "| 29. Verificar se grafo é ciclico                 |" << endl; 
-    cout << "| 30. Sair                                         |" << endl;
-    cout << "\033[0m"; 
-    cout << "\033[1m\033[33m";
-    cout << "====================================================" << endl;
-    cout << "\033[0m";
-    cout << "Escolha uma opção: ";
+const unsigned int numVertices = 10000000; // Supondo um número máximo de vértices
+int opcao;
+bool direcionado = false, valorado = false;
+Grafo grafo(numVertices, 0);
+
+void exibirMenuPrincipal();
+void exibirMenuVerificar();
+void exibirMenuListar();
+void exibirMenuGerar();
+
+void limpaTela() 
+{
+  cout << "\033[2J\033[1;1H";
 }
 
-void exibirMenu() {
-    cout << "\033[2J\033[1;1H"; 
-    cout << "\033[1m\033[33m"; 
-    cout << "====================================================" << endl;
-    cout << "|                     M E N U                      |" << endl;
-    cout << "====================================================" << endl;
-    cout << "\033[0m";
-    cout << "\033[1m\033[34m";
-    cout << "| 1. Inserir vértice                               |" << endl;
-    cout << "| 2. Inserir aresta                                |" << endl;
-    cout << "| 3. Obter grau de um vértice                      |" << endl;
-    cout << "| 4. Imprimir matriz de adjacências                |" << endl;
-    cout << "| 5. Imprimir lista de vértices                    |" << endl;
-    cout << "| 6. Remover vértice                               |" << endl;
-    cout << "| 7. Numero de vertices                            |" << endl;
-    cout << "| 8. Numero de arestas                             |" << endl;
-    cout << "| 9. Busca em largura                              |" << endl;
-    cout << "| 10. Busca em profundidade                        |" << endl;
-    cout << "| 11. Remover aresta                               |" << endl;
-    cout << "| 12. Verificar se é conexo                        |" << endl;
-    cout << "| 13. Verificar quantidade de ciclos               |" << endl;
-    cout << "| 14. Verificar se grafo é euleriano               |" << endl;
-    cout << "| 15. Algoritmo de prim                            |" << endl;
-    cout << "| 16. Arvore busca em largura                      |" << endl;
-    cout << "| 17. Arvore busca em profundidade                 |" << endl;
-    cout << "| 18. Listar caminho hamiltoniano                  |" << endl;
-    cout << "| 19. Encontrar Verices de articulação(Tarjan)     |" << endl;    
-    cout << "| 20. Exibir caminho euleriano                     |" << endl;
-    cout << "| 21. Exibir caminho minimo (dijkstra)             |" << endl;
-    cout << "| 22. Exibir componentes conexas                   |" << endl; 
-    cout << "| 23. Exibir arestas ponte                         |" << endl; 
-    cout << "| 24. Exibir se grafo é bipartido                  |" << endl; 
-    cout << "| 25. Exibir se grafo é planar                     |" << endl;     
-    cout << "| 26. Qual o fluxo maximo                          |" << endl; 
-    cout << "| 27. Verificar se grafo é ciclico                 |" << endl; 
-    cout << "| 28. Sair                                         |" << endl;
-    cout << "\033[0m"; 
-    cout << "\033[1m\033[33m";
-    cout << "====================================================" << endl;
-    cout << "\033[0m";
-    cout << "Escolha uma opção: ";
+void animacaoTransicao() 
+{
+  limpaTela();
+  cout << "\033[1m\033[32m"
+        << "====================================================" << endl
+        << "|                   Carregando...                   |" << endl
+        << "====================================================" << endl
+        << "\033[0m" << flush;
+  usleep(1000000); // 1 segundo
 }
 
-void limpaTela() {
-    cout << "\033[2J\033[1;1H";
+void exibirMenu(const string& titulo, const vector<string>& opcoes) 
+{
+  limpaTela();
+  cout << "\033[1m\033[33m"
+        << "====================================================" << endl
+        << "|            " << titulo << "            |" << endl
+        << "====================================================" << endl
+        << "\033[0m";
+
+  cout << "\033[1m\033[34m";
+  for (size_t i = 0; i < opcoes.size(); ++i) {
+      cout << "| " << i + 1 << ". " << opcoes[i] << endl;
+  }
+  cout << "| 0. Sair                                          |" << endl;
+  cout << "\033[0m\033[1m\033[33m"
+        << "====================================================" << endl
+        << "\033[0m";
+  cout << "Escolha uma opção: ";
 }
 
-void animacaoTransicao() {
-    limpaTela();
-    cout << "\033[1m\033[32m";
-    cout << "====================================================" << endl;
-    cout << "|                   Carregando...                   |" << endl;
-    cout << "====================================================" << endl;
-    cout << "\033[0m";
-    usleep(05000000); // 1 segundo
+
+void processarOpcaoVerificar(int opcao) 
+{
+  switch (opcao) {
+      case 1:
+          animacaoTransicao();
+          cout << "Quantidade de vértices: " << grafo.qtdvertice() << endl;
+          break;
+      case 2:
+          animacaoTransicao();
+          cout << "Quantidade de arestas: " << grafo.qtdarestas() << endl;
+          break;
+      case 3:
+          animacaoTransicao();
+          cout << (grafo.ehConexo() ? "O grafo é conexo" : "O grafo não é conexo") << endl;
+          break;
+      case 4:
+          animacaoTransicao();
+          grafo.ehBipartido();
+          break;
+      case 5:
+          animacaoTransicao();
+          grafo.eheuleriano();
+          break;
+      case 6:
+          animacaoTransicao();
+          grafo.ehHamiltoniano();
+          break;
+      case 7:
+          animacaoTransicao();
+          grafo.ehCiclico();
+          break;
+      case 8:
+          animacaoTransicao();
+          grafo.ehPlanar();
+          break;
+      case 0:
+          cout << "Voltando para o menu principal..." << endl;
+          exibirMenuPrincipal();
+          return;
+      default:
+          cout << "Opção inválida!" << endl;
+  }
+  cout << "Pressione qualquer tecla para voltar ao menu...";
+  cin.ignore();
+  cin.get();
+  exibirMenuVerificar();
+}
+
+void exibirMenuVerificar() 
+{
+  vector<string> opcoes = {
+      "Quantidade de vértices", "Quantidade de arestas", "Conexo", "Bipartido",
+      "Euleriano", "Hamiltoniano", "Cíclico", "Planar"
+  };
+  exibirMenu("M E N U   -   V E R I F I C A R", opcoes);
+  cin >> opcao;
+  processarOpcaoVerificar(opcao);
+}
+
+void processarOpcaoListar(int opcao) {
+  switch (opcao) {
+      case 1:
+          animacaoTransicao();
+          grafo.imprimirvertices();
+          break;
+      case 2:
+          animacaoTransicao();
+          grafo.listarArestas();
+          break;
+      case 3:
+          animacaoTransicao();
+          grafo.exibirComponentesConexas();
+          break;
+      case 4:
+          animacaoTransicao();
+          grafo.exibirCaminhoEuleriano();
+          break;
+      case 5:
+          animacaoTransicao();
+          grafo.listarCaminhoHamiltoniano();
+          break;
+      case 6:
+          animacaoTransicao();
+          grafo.encontrarVerticesArticulacao();
+          break;
+      case 7:
+          animacaoTransicao();
+          grafo.exibirArestasPonte();
+          break;
+      case 0:
+          cout << "Voltando para o menu principal..." << endl;
+          exibirMenuPrincipal();
+          return;
+      default:
+          cout << "Opção inválida!" << endl;
+  }
+  cout << "Pressione qualquer tecla para voltar ao menu...";
+  cin.ignore();
+  cin.get();
+  exibirMenuListar();
+}
+
+void exibirMenuListar() 
+{
+  vector<string> opcoes = {
+      "Vértices", "Arestas", "Componentes conexas", "Um Caminho euleriano",
+      "Vértices de articulação", "Arestas ponte"
+  };
+  exibirMenu("M E N U   -   L I S T A R", opcoes);
+  cin >> opcao;
+  processarOpcaoListar(opcao);
+}
+
+void processarOpcaoGerar(int opcao) {
+  string origem, destino;
+  switch (opcao) {
+      case 1:
+          animacaoTransicao();
+          grafo.imprimirvertices();
+          break;
+      case 2:
+          animacaoTransicao();
+          grafo.buscaemprofundidadeArvore();
+          break;
+      case 3:
+          animacaoTransicao();
+          grafo.buscaemlarguraArvore();
+          break;
+      case 4:
+          animacaoTransicao();
+          grafo.prim();
+          break;
+      case 5:
+          if (direcionado) {
+              animacaoTransicao();
+              grafo.exibirOrdemTopologica();
+          } else {
+              cout << "Opção inválida!" << endl;
+          }
+          break;
+      case 6:
+          if (valorado) {
+              animacaoTransicao();
+              cout << "Insira o vertice de origem: ";
+              cin >> origem;
+              cout << endl;
+              cout << "Insira o vertice de destino: ";
+              cin >> destino;
+              grafo.exibirCaminhoMinimoDijkstra(origem, destino);
+          } else {
+              cout << "Opção inválida!" << endl;
+          }
+          break;
+      case 7:
+          if (valorado) {
+              animacaoTransicao();
+              cout << "Insira o vertice de origem: ";
+              cin >> origem;
+              cout << endl;
+              cout << "Insira o vertice de destino: ";
+              cin >> destino;
+              int fluxoMax = grafo.fluxoMaximo(origem, destino);
+              cout << "O fluxo maximo é: " << fluxoMax << endl;
+          } else {
+              cout << "Opção inválida!" << endl;
+          }
+          break;
+      case 8:
+          if (valorado) {
+              animacaoTransicao();
+              grafo.gerarFechamentoTransitivo();
+          } else {
+              cout << "Opção inválida!" << endl;
+          }
+          break;
+      case 0:
+          cout << "Voltando para o menu principal..." << endl;
+          exibirMenuPrincipal();
+          return;
+      default:
+          cout << "Opção inválida!" << endl;
+  }
+  cout << "Pressione qualquer tecla para voltar ao menu...";
+  cin.ignore();
+  cin.get();
+  exibirMenuGerar();
+}
+
+void exibirMenuGerar() 
+{
+  vector<string> opcoes = {
+      "Lista de adjacência", "Árvore de profundidade", "Árvore de largura", "Árvore geradora mínima"
+  };
+  if (direcionado) {
+      opcoes.push_back("Ordem topológica");
+  }
+  if (valorado) {
+      opcoes.push_back("Caminho mínimo entre vértices");
+      opcoes.push_back("Fluxo máximo");
+      opcoes.push_back("Fechamento transitivo");
+  }
+  exibirMenu("M E N U   -   G E R A R", opcoes);
+  cin >> opcao;
+  processarOpcaoGerar(opcao);
+}
+
+void exibirMenuPrincipal() 
+{
+  vector<string> opcoes = {
+      "Verificar", "Listar", "Gerar"
+  };
+  exibirMenu("M E N U   -   P R I N C I P A L", opcoes);
+  do {
+      cin >> opcao;
+      switch (opcao) {
+          case 1:
+              animacaoTransicao();
+              exibirMenuVerificar();
+              break;
+          case 2:
+              animacaoTransicao();
+              exibirMenuListar();
+              break;
+          case 3:
+              animacaoTransicao();
+              exibirMenuGerar();
+              break;
+          case 0:
+              cout << "Obrigado por usar o nosso sistema =)" << endl;
+              return;
+          default:
+              cout << "Opção inválida!" << endl;
+      }
+      usleep(500000); // Aguarda 0.5 segundos para dar tempo de ler antes de limpar a tela
+  } while (opcao != 0);
 }
 
 int main() {
-    unsigned int numVertices = 10000000; // Supondo um número máximo de vértices
-    int opcao;
-    int resultado;
-    string item1, item2;
-    int nulo = 0;
-    Grafo grafo(numVertices, nulo);
-    
-
     string resposta;
     cout << "O grafo é direcionado? (y/n): ";
     cin >> resposta;
+
     if (resposta == "y" || resposta == "Y") {
         grafo.defineDirecionado(resposta);
     }
-    
+
     grafo.lergrafo();
     grafo.reescreverArquivo();
-    
+
     if (grafo.ehdirecionado()) {
-        do {
-            limpaTela();
-            exibirMenuDirecionado();
-            cin >> opcao;
-
-            switch (opcao) {
-                case 1: {
-                    animacaoTransicao();
-                    string vertice; 
-                    cout << "Digite o nome do vértice a ser inserido: ";
-                    cin >> vertice;
-                    grafo.verificaExistencia(vertice);
-                    grafo.reescreverArquivo();
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 2: {
-                    animacaoTransicao();
-                    string saida, entrada, peso;
-                    if (grafo.ehvalorado() == false) {
-                        cout << "Digite o nome do vértice de saída: ";
-                        cin >> saida;
-                        cout << "Digite o nome do vértice de entrada: ";
-                        cin >> entrada;
-                        peso = "1";
-                        grafo.verificaExistenciaAresta(saida, entrada, peso);
-                        grafo.reescreverArquivo();
-                    } else {
-                        cout << "Digite o nome do vértice de saída: ";
-                        cin >> saida;
-                        cout << "Digite o nome do vértice de entrada: ";
-                        cin >> entrada;
-                        cout << "Digite o peso dessa aresta: ";
-                        cin >> peso;
-                        grafo.verificaExistenciaAresta(saida, entrada, peso);
-                        grafo.reescreverArquivo();
-                    }
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 3: {
-                    animacaoTransicao();
-                    string vertice;
-                    cout << "Digite o nome do vértice para obter o grau: ";
-                    cin >> vertice;   
-                    grafo.obtergrau(vertice);             
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 4: {
-                    animacaoTransicao();
-                    grafo.imprimirmatriz();
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 5: {
-                    animacaoTransicao();
-                    grafo.imprimirvertices();
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 6: {
-                    animacaoTransicao();
-                    string verticeRemover;
-                    cout << "Digite o nome do vértice a ser removido: ";
-                    cin >> verticeRemover;
-                    grafo.removervertice(verticeRemover);
-                    grafo.reescreverArquivo();
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 7: {
-                    animacaoTransicao();
-                    cout << "A quantidade de vertices no grafo é: ";
-                    cout << grafo.qtdvertice() << endl;
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 8: {
-                    animacaoTransicao();
-                    cout << "A quantidade de arestas no grafo é: ";
-                    cout << grafo.qtdarestas() << endl;
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 9: {
-                    animacaoTransicao();
-                    cout << "Digite o vertice de origem: ";
-                    cin >> item1;
-                    cout << "Digite o vertice de destino: ";
-                    cin >> item2;
-                    grafo.buscaemlargura(item1, item2);
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 10: {
-                    animacaoTransicao();
-                    cout << "Digite o vertice de origem: ";
-                    cin >> item1;
-                    cout << "Digite o vertice de destino: ";
-                    cin >> item2;
-                    grafo.buscaemprofundidade(item1, item2);
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 11: {
-                    animacaoTransicao();
-                    cout << "Digite o vertice de origem da aresta que vai ser apagada: ";
-                    cin >> item1;
-                    cout << "Digite o vertice de destino da aresta que vai ser apagada: ";
-                    cin >> item2;
-                    grafo.removeraresta(item1, item2);               
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 12: {
-                    animacaoTransicao();
-                    int b = grafo.ehConexo();
-                    if (b == 1){
-                      cout << "O grafo é conexo" << endl;
-                    } else {
-                      cout << "O grafo não é conexo" << endl;
-                    }
-                    cout << endl;
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 13: {
-                    animacaoTransicao();
-                    grafo.possuiCiclos();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 14: {
-                    animacaoTransicao();
-                    bool teste = grafo.ehfortementeconexo();
-                    if (teste){
-                      cout << "Grafo é fortemente conexo" << endl;
-                    } else {
-                      cout << "Grafo não é fortemente conexo" << endl;
-                    }
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 15: {
-                    animacaoTransicao();
-                    grafo.eheuleriano();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 16: {
-                    animacaoTransicao();
-                    grafo.prim();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 17: {
-                    animacaoTransicao();
-                    grafo.buscaemlarguraArvore();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 18: {
-                    animacaoTransicao();
-                    grafo.buscaemprofundidadeArvore();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 19: {
-                    animacaoTransicao();
-                    grafo.listarCaminhoHamiltoniano();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 20: {
-                    animacaoTransicao();
-                    grafo.encontrarVerticesArticulacao();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 21: {
-                    animacaoTransicao();
-                    grafo.exibirCaminhoEuleriano();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 22: {
-                    animacaoTransicao();
-                    cout << "Digite vertice de saida: ";
-                    cin >> item1;
-                    cout << endl;
-                    cout << "Digite vertice objetivo: ";
-                    cin >> item2;
-                    cout << endl;
-                    grafo.exibirCaminhoMinimoDijkstra(item1, item2);
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 23: {
-                    animacaoTransicao();
-                    grafo.exibirOrdemTopologica();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 24: {
-                    animacaoTransicao();
-                    grafo.exibirComponentesConexas();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 25: {
-                    animacaoTransicao();
-                    grafo.exibirArestasPonte();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 26: {
-                    animacaoTransicao();
-                    grafo.ehBipartido();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 27: {
-                    animacaoTransicao();
-                    grafo.ehPlanar();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 28: {
-                    animacaoTransicao();
-                    cout << "Digite vertice de saida: ";
-                    cin >> item1;
-                    cout << endl;
-                    cout << "Digite vertice objetivo: ";
-                    cin >> item2;
-                    cout << endl;
-                    resultado = grafo.fluxoMaximo(item1, item2);
-                    cout << "Fluxo maximo é " << resultado << endl;
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 29: {
-                    animacaoTransicao();
-                    grafo.ehCiclico();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 30:
-                    cout << "Obrigado por usar o nosso sitema =)" << endl;
-                    break;
-                default:
-                    cout << "Opção inválida!" << endl;
-            }
-            usleep(500000); // Aguarda 0.5 segundos para dar tempo de ler antes de limpar a tela
-        } while (opcao != 30);
-        
-        grafo.reescreverArquivo();
-    } else {
-        do {
-            limpaTela();
-            exibirMenu();
-            cin >> opcao;
-
-            switch (opcao) {
-                case 1: {
-                    animacaoTransicao();
-                    string vertice;
-                    cout << "Digite o nome do vértice a ser inserido: ";
-                    cin >> vertice;
-                    grafo.verificaExistencia(vertice);
-                    grafo.reescreverArquivo();
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 2: {
-                    animacaoTransicao();
-                    string saida, entrada, peso;
-                    if (grafo.ehvalorado() == false) {
-                        cout << "Digite o nome do vértice de saída: ";
-                        cin >> saida;
-                        cout << "Digite o nome do vértice de entrada: ";
-                        cin >> entrada;
-                        peso = "1";
-                        grafo.verificaExistenciaAresta(saida, entrada, peso);
-                        grafo.reescreverArquivo();
-                    } else {
-                        cout << "Digite o nome do vértice de saída: ";
-                        cin >> saida;
-                        cout << "Digite o nome do vértice de entrada: ";
-                        cin >> entrada;
-                        cout << "Digite o peso dessa aresta: ";
-                        cin >> peso;
-                        grafo.verificaExistenciaAresta(saida, entrada, peso);
-                        grafo.reescreverArquivo();
-                    }
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 3: {
-                    animacaoTransicao();
-                    string vertice;
-                    cout << "Digite o nome do vértice para obter o grau: ";
-                    cin >> vertice;   
-                    grafo.obtergrau(vertice);             
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 4: {
-                    animacaoTransicao();
-                    grafo.imprimirmatriz();
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 5: {
-                    animacaoTransicao();
-                    grafo.imprimirvertices();
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 6: {
-                    animacaoTransicao();
-                    string verticeRemover;
-                    cout << "Digite o nome do vértice a ser removido: ";
-                    cin >> verticeRemover;
-                    grafo.removervertice(verticeRemover);
-                    grafo.reescreverArquivo();
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 7: {
-                    animacaoTransicao();
-                    cout << "A quantidade de vertices no grafo é: ";
-                    cout << grafo.qtdvertice() << endl;
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 8: {
-                    animacaoTransicao();
-                    cout << "A quantidade de arestas no grafo é: ";
-                    cout << grafo.qtdarestas() << endl;
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 9: {
-                    animacaoTransicao();
-                    cout << "Digite o vertice de origem: ";
-                    cin >> item1;
-                    cout << "Digite o vertice de destino: ";
-                    cin >> item2;
-                    grafo.buscaemlargura(item1, item2);
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 10: {
-                    animacaoTransicao();
-                    cout << "Digite o vertice de origem: ";
-                    cin >> item1;
-                    cout << "Digite o vertice de destino: ";
-                    cin >> item2;
-                    grafo.buscaemprofundidade(item1, item2);
-                    
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 11: {
-                    animacaoTransicao();
-                    cout << "Digite o vertice de origem da aresta que vai ser apagada: ";
-                    cin >> item1;
-                    cout << "Digite o vertice de destino da aresta que vai ser apagada: ";
-                    cin >> item2;
-                    grafo.removeraresta(item1, item2);               
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 12: {
-                    animacaoTransicao();
-                    int b = grafo.ehConexo();
-                    if (b == 1){
-                      cout << "O grafo é conexo" << endl;
-                    } else {
-                      cout << "O grafo não é conexo" << endl;
-                    }
-                    cout << endl;
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 13: {
-                    animacaoTransicao();
-                    grafo.possuiCiclos();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 14: {
-                    animacaoTransicao();
-                    grafo.eheuleriano();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 15: {
-                    animacaoTransicao();
-                    grafo.prim();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 16: {
-                    animacaoTransicao();
-                    grafo.buscaemlarguraArvore();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 17: {
-                    animacaoTransicao();
-                    grafo.buscaemprofundidadeArvore();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 18: {
-                    animacaoTransicao();
-                    grafo.listarCaminhoHamiltoniano();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 19: {
-                    animacaoTransicao();
-                    grafo.encontrarVerticesArticulacao();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 20: {
-                    animacaoTransicao();
-                    grafo.exibirCaminhoEuleriano();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 21: {
-                    animacaoTransicao();
-                    cout << "Digite vertice de saida: ";
-                    cin >> item1;
-                    cout << endl;
-                    cout << "Digite vertice objetivo: ";
-                    cin >> item2;
-                    cout << endl;
-                    grafo.exibirCaminhoMinimoDijkstra(item1, item2);
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 22: {
-                    animacaoTransicao();
-                    grafo.exibirComponentesConexas();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 23: {
-                    animacaoTransicao();
-                    grafo.exibirArestasPonte();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 24: {
-                    animacaoTransicao();
-                    grafo.ehBipartido();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 25: {
-                    animacaoTransicao();
-                    grafo.ehPlanar();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 26: {
-                    animacaoTransicao();
-                    cout << "Digite vertice de saida: ";
-                    cin >> item1;
-                    cout << endl;
-                    cout << "Digite vertice objetivo: ";
-                    cin >> item2;
-                    cout << endl;
-                    resultado = grafo.fluxoMaximo(item1, item2);
-                    cout << "Fluxo maximo é " << resultado << endl;
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 27: {
-                    animacaoTransicao();
-                    grafo.ehCiclico();
-                    cout << "Pressione qualquer tecla para voltar ao menu principal...";
-                    cin.ignore();
-                    cin.get();
-                    break;
-                }
-                case 28:
-                    cout << "Obrigado por usar o nosso sitema =)" << endl;
-                    break;
-                default:
-                    cout << "Opção inválida!" << endl;
-            }
-            usleep(500000); // Aguarda 0.5 segundos para dar tempo de ler antes de limpar a tela
-        } while (opcao != 28);
-        
-        grafo.reescreverArquivo();
+        direcionado = true;
     }
+    if (grafo.ehvalorado()) {
+        valorado = true;
+    }
+
+    exibirMenuPrincipal();
+    grafo.reescreverArquivo();
 
     return 0;
 }

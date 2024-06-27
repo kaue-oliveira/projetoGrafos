@@ -1,17 +1,18 @@
 #ifndef LISTA_H
 #define LISTA_H
 #include <string>
+#include "noh.h"
+
 class Lista {
 public:
     struct No {
         int vertice;
         int peso;
         No* proximo;
-        No(int v, int p) : vertice(v), peso(p), proximo(nullptr) {}
     };
 
 private:
-    No* head;
+    No* proximo;
 
 public:
     Lista();
@@ -24,6 +25,9 @@ public:
     void limpar();
     void imprimir(const std::string* vertices) const;
     No* inicio() const;
+    No* fim() const;
+    string obter(int posicao);
+
 };
 
 #endif // LISTA_H
